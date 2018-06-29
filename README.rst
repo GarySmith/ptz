@@ -1,12 +1,12 @@
-==========
-PTZ Server
-==========
+===================
+PTZ Web Application
+===================
 
-REST Service to interact with PTZ optics camera
+Web application for interactng with a PTZ optics camera
 
 Getting started
 ---------------
-Start the service listening on port 5000 with::
+Start the service listening on port 5100 with::
 
    tox
 
