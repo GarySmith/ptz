@@ -54,7 +54,7 @@ def calibrate():
 
 # TODO(gary): Configure apache to enable uploading and downloading files
 #             directly rather than relying on flask for this.
-@bp.route("/image/<path:name>", methods=['GET'])
+@app.route("/image/<path:name>", methods=['GET'])
 def get_image_file(name):
     dir = 'images'
     return send_from_directory(dir, path)
