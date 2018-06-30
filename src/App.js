@@ -10,22 +10,34 @@ class App extends Component {
       presets : [],
       view: '',
     };
+
+    this.hasServer = false;
   }
 
-  foocomponentDidMount = () => {
-    const init = {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json',
-      }
-    };
+  componentDidMount = () => {
+    if (this.hasServer) {
+      const init = {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'Content-Type': 'application/json',
+        }
+      };
 
-    fetch('/api/presets', init)
-    .then(response => response.json())
-    .then(response => {
-      this.setState({presets: response});
-    });
+      fetch('/api/presets', init)
+      .then(response => response.json())
+      .then(response => {
+        this.setState({presets: response});
+      });
+    } else {
+      this.setState({presets: [{
+          "num": 1,
+          "image_url": "/image/one.jpg",
+        },{
+          "num": 2,
+          "image_url": "/image/two.jpg",
+        }]});
+    }
   }
 
   render() {
