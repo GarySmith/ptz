@@ -7,11 +7,12 @@ class App extends Component {
     super(props);
     this.state={
       expanded: false,
-      presets : []
+      presets : [],
+      view: '',
     };
   }
 
-  componentDidMount = () => {
+  foocomponentDidMount = () => {
     const init = {
       method: 'GET',
       headers: {
@@ -32,6 +33,10 @@ class App extends Component {
     if(this.state.expanded) {
       menuclass+=" expanded";
     }
+    let viewclass = ''
+    if(this.state.view=="login") {
+      viewclass+=' login'
+    }
     const buttons = this.state.presets.map(e => (
       <div key={e.num}>
         {e.num}
@@ -43,24 +48,34 @@ class App extends Component {
         <div>
           <div key="sideId" className={menuclass}>
             <a href="javascript:void(0)" className="closebtn" onClick={() => this.closeNav()}> &times;</a>
-            <a href="#">Name</a>
-            <a href="#">Address</a>
-            <a href="#">Calibrate</a>
-            <a href="#">Update/Upload Image</a>
+            <a href="#" onClick={()=> this.sideButtonClicked('login')}>Login</a>
+            <a href="#" onClick={()=> this.sideButtonClicked('address')}>Address</a>
+            <a href="#" onClick={()=> this.sideButtonClicked('calibrate')}>Calibrate</a>
+            <a href="#" onClick={()=> this.sideButtonClicked('update')}>Update/Upload Image</a>
+            <a href="#" onClick={()=> this.sideButtonClicked('home')}>Home</a>
           </div>
           <span onClick={(e) => this.openNav(e)}>&#9776; menu</span>
         </div>
+        <div className="title">PTZ Camera App</div>
+        <div className="header">
+          {this.state.view}
+        </div>
+        <div></div>
         <div className="content">
           {buttons}
         </div>
       </div>
     );
   }
-  closeNav(e) {
+  closeNav() {
     this.setState({expanded: false});
   }
   openNav() {
     this.setState({expanded: true});
+  }
+  sideButtonClicked(str) {
+    this.closeNav();
+    this.setState({view: str});
   }
 }
 
