@@ -8,15 +8,15 @@ def get_all_presets():
     Returns a json array:
         [{
             "num": 1,
-            "image_url": "/image/one.jpg",
+            "image_url": "/images/1.jpg",
          },
          {
             "num": 2,
-            "image_url": "/image/two.jpg",
+            "image_url": "/images/2.jpg",
          },
          {
             "num": 3,
-            "image_url": "/image/three.jpg",
+            "image_url": "/images/3.jpg",
          }
         ]
 
@@ -26,10 +26,10 @@ def get_all_presets():
     """
     presets = [{
         "num": 1,
-        "image_url": "/image/one.jpg",
+        "image_url": "/images/1.jpg",
     },{
         "num": 2,
-        "image_url": "/image/two.jpg",
+        "image_url": "/images/2.jpg",
     }]
     return jsonify(presets)
 

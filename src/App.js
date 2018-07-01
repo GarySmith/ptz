@@ -11,7 +11,7 @@ class App extends Component {
       view: '',
     };
 
-    this.hasServer = false;
+    this.hasServer = true;
   }
 
   componentDidMount = () => {
@@ -32,10 +32,10 @@ class App extends Component {
     } else {
       this.setState({presets: [{
           "num": 1,
-          "image_url": "/image/one.jpg",
+          "image_url": "/images/1.jpg",
         },{
           "num": 2,
-          "image_url": "/image/two.jpg",
+          "image_url": "/images/2.jpg",
         }]});
     }
   }
@@ -52,6 +52,7 @@ class App extends Component {
     const buttons = this.state.presets.map(e => (
       <div key={e.num}>
         {e.num}
+        <img src={process.env.PUBLIC_URL + e.image_url}/>
       </div>
     ));
 
