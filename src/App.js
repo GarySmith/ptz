@@ -9,6 +9,9 @@ class App extends Component {
       expanded: false,
       presets : [],
       view: '',
+      imgSelected: null,
+      numSelected: 0,
+      contentDiv: "content",
     };
 
     this.hasServer = true;
@@ -40,19 +43,33 @@ class App extends Component {
     }
   }
 
+  presetClicked = (e) => {
+    let src = e.target.src;
+    if(e.target.className=="presetImgs selectedImg") {
+      e.target.className= "presetImgs";
+      this.setState({imgSelected: null});
+    }
+    else {
+      let oldPic = this.state.imgSelected;
+      e.target.className+= " selectedImg";
+      if(oldPic) {
+        oldPic.className="presetImgs";
+      }
+      this.setState({imgSelected: e.target});
+    }
+  }
+
+
   render() {
     let menuclass="sidenav";
     if(this.state.expanded) {
       menuclass+=" expanded";
     }
-    let viewclass = ''
-    if(this.state.view=="login") {
-      viewclass+=' login'
-    }
+
     const buttons = this.state.presets.map(e => (
-      <div key={e.num}>
+      <div key={e.num} className='presetBoxes' onClick={this.presetClicked}>
         {e.num}
-        <img src={process.env.PUBLIC_URL + e.image_url}/>
+        <img src={process.env.PUBLIC_URL + e.image_url} className="presetImgs"/>
       </div>
     ));
 
@@ -61,11 +78,11 @@ class App extends Component {
         <div>
           <div key="sideId" className={menuclass}>
             <a href="javascript:void(0)" className="closebtn" onClick={() => this.closeNav()}> &times;</a>
-            <a href="#" onClick={()=> this.sideButtonClicked('login')}>Login</a>
-            <a href="#" onClick={()=> this.sideButtonClicked('address')}>Address</a>
-            <a href="#" onClick={()=> this.sideButtonClicked('calibrate')}>Calibrate</a>
-            <a href="#" onClick={()=> this.sideButtonClicked('update')}>Update/Upload Image</a>
-            <a href="#" onClick={()=> this.sideButtonClicked('home')}>Home</a>
+            <a href="#" onClick={()=> this.sideButtonClicked('Login')}>Login</a>
+            <a href="#" onClick={()=> this.sideButtonClicked('IP address')}>Address</a>
+            <a href="#" onClick={()=> this.sideButtonClicked('Calibrate')}>Calibrate</a>
+            <a href="#" onClick={()=> this.sideButtonClicked('Update/Upload Image')}>Update/Upload Image</a>
+            <a href="#" onClick={()=> this.sideButtonClicked('Home')}>Home</a>
           </div>
           <span onClick={(e) => this.openNav(e)}>&#9776; menu</span>
         </div>
@@ -73,8 +90,12 @@ class App extends Component {
         <div className="header">
           {this.state.view}
         </div>
-        <div></div>
-        <div className="content">
+        <div className="login">
+            Username: <input type= "text" key="username"/>
+            Password: <input type= "text" key="password"/>
+            <button key="submit">submit</button>
+        </div>
+        <div className={this.state.contentDiv}>
           {buttons}
         </div>
       </div>
@@ -89,6 +110,12 @@ class App extends Component {
   sideButtonClicked(str) {
     this.closeNav();
     this.setState({view: str});
+    if(str!= '' && str != 'Home') {
+      this.setState({contentDiv: "content hidden"});
+    }
+    else {
+      this.setState({contentDiv: "content"});
+    }
   }
 }
 

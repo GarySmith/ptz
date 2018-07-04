@@ -6,6 +6,32 @@ span {
   cursor: pointer;
   padding-left: 1%;
 }
+.presetBoxes {
+  margin: auto;
+  margin-bottom: 10px;
+  width: 10%;
+  text-align: left;
+  padding: 20px;
+  font-size: 40px;
+}
+.presetImgs {
+  border: 3px solid white;
+  border-radius: 4px;
+  padding: 10px;
+
+  &.selectedImg {
+    border: 3px solid blue;
+  }
+}
+
+.content {
+  display: initial;
+  &.hidden {
+    display: none;
+  }
+}
+
+
 .sidenav {
     height: 100%;
     width: 0;
@@ -53,6 +79,13 @@ span {
   font-size: 20px;
   text-align: center;
   padding: 5%;
+}
+.login {
+  display: relative;
+
+  &.hidden {
+    display: none
+  }
 }
 
 @media screen and (max-height: 450px) {
