@@ -27,14 +27,17 @@ def get_all_presets():
     Preset 0 is supported, and will be used as the default if set.
 
     """
-    presets = [{
-        "num": 1,
-        "image_url": "/images/1.jpg",
-    },{
-        "num": 2,
-        "image_url": "/images/2.jpg",
-    }]
-    return jsonify(presets)
+    settings = {}
+
+    try:
+        with open("settings.json") as f:
+            settings = json.load(f)
+
+    except IOError:
+        pass
+
+    return jsonify(settings.get('preseets', []))
+
 
 @app.route("/api/preset")
 def get_current_presets():
@@ -61,7 +64,6 @@ def calibrate():
 def get_image_file(name):
 
     dir = os.path.normpath(os.path.join( os.getcwd(), 'public', 'images'))
-
     return send_from_directory(dir, name)
 
 
