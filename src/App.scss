@@ -6,31 +6,43 @@ span {
   cursor: pointer;
   padding-left: 1%;
 }
-.presetBoxes {
-  margin: auto;
-  margin-bottom: 10px;
-  width: 10%;
+.imgRow {
+  display: block;
+  width: 50%;
   text-align: left;
   padding: 20px;
-  font-size: 40px;
+  font-size: 10px;
+
+  &.viewDiv {
+    width: 50%;
+    display: block;
+    font-size: 15px;
+    margin-left: 20%;
+  }
+  &.green {
+    color: green;
+  }
+  &.red {
+    color: red;
+  }
 }
 .presetImgs {
+  display: inline-block;`
   border: 3px solid white;
   border-radius: 4px;
-  padding: 10px;
+  padding: 5px;
 
   &.selectedImg {
     border: 3px solid blue;
   }
 }
 
-.content {
+.home {
   display: initial;
   &.hidden {
-    display: none;
+  display: none;
   }
 }
-
 
 .sidenav {
     height: 100%;
@@ -76,16 +88,16 @@ span {
 }
 
 .header {
-  font-size: 20px;
+  font-size: 30px;
   text-align: center;
   padding: 5%;
 }
-.login {
-  display: relative;
 
-  &.hidden {
-    display: none
-  }
+.view {
+  padding: 5px;
+  margin: auto;
+  width: 20%;
+  font-size: 20px;
 }
 
 @media screen and (max-height: 450px) {
