@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, send_from_directory
 from time import sleep
+import os
 app = Flask(__name__)
 
 @app.route("/api/presets")
@@ -21,7 +22,9 @@ def get_all_presets():
         ]
 
     Note:
-        max numbers?
+        The camera supports a maximum of 255 presets
+
+    Preset 0 is supported, and will be used as the default if set.
 
     """
     presets = [{
@@ -54,10 +57,12 @@ def calibrate():
 
 # TODO(gary): Configure apache to enable uploading and downloading files
 #             directly rather than relying on flask for this.
-@app.route("/image/<path:name>", methods=['GET'])
+@app.route("/images/<path:name>", methods=['GET'])
 def get_image_file(name):
-    dir = 'images'
-    return send_from_directory(dir, path)
+
+    dir = os.path.normpath(os.path.join( os.getcwd(), 'public', 'images'))
+
+    return send_from_directory(dir, name)
 
 
 @app.route("/api/login", methods=['POST'])
