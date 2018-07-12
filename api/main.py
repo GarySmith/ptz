@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, send_from_directory
 from time import sleep
+import json
 import os
 app = Flask(__name__)
 
@@ -27,15 +28,7 @@ def get_all_presets():
     Preset 0 is supported, and will be used as the default if set.
 
     """
-    settings = {}
-
-    try:
-        with open("settings.json") as f:
-            settings = json.load(f)
-
-    except IOError:
-        pass
-
+    settings = get_settings()
     return jsonify(settings.get('preseets', []))
 
 
@@ -74,3 +67,17 @@ def login():
 # Need apis for:
 #   Uploading an image for a given preset
 #   Setting the image url for a given preset
+#   Updating the IP address of the camera
+
+
+def get_settings():
+    settings = {}
+
+    try:
+        with open("settings.json") as f:
+            settings = json.load(f)
+
+    except IOError:
+        pass
+
+    return settings
