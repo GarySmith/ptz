@@ -121,6 +121,11 @@ span {
     display: inline-block;
     text-align: left;
     padding: 0px;
+    &.viewDiv {
+      margin-left: -50%;
+      width: 200px;
+      padding: 5px;
+    }
   }
   .presetImgs {
     border: 3px solid white;
@@ -131,11 +136,8 @@ span {
       border: 3px solid blue;
     }
    }
-  .imgNumbers {
-   /* font-size: 30px;
-    position: absolute;
-    top: 10px;
-    left: 50px;*/
+  .header {
+    font-size: 25px;
   }
   .title {
     font-size: 20px;

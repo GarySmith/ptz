@@ -158,7 +158,7 @@ class App extends Component {
     this.state={
       expanded: false,
       presets : [],
-      imgSelected: null,
+      currentPreset: -1,
       header: "",
       showCredentials: false,
       showAddress: false,
@@ -185,7 +185,13 @@ class App extends Component {
       .then(response => response.json())
       .then(response => {
         this.setState({presets: response});
-      });
+        return fetch('/api/current_preset', init)
+      })
+      .then(response => response.json())
+      .then(response => {
+        console.log('current '+response.current_preset);
+        this.setState({currentPreset: response.current_preset});
+      })
     } else {
       this.setState({presets: [{
           "num": 1,
@@ -197,18 +203,24 @@ class App extends Component {
     }
   }
 
-  presetClicked = (e) => {
-    let src = e.target.src;
-    if(e.target.className=="presetImgs") {
-      let oldPic = this.state.imgSelected;
-      e.target.className+= " selectedImg";
-      if(oldPic) {
-        oldPic.className="presetImgs";
-      }
-      this.setState({imgSelected: e.target});
-    }
-  }
+  presetClicked = (num) => {
+    console.log(num);
+    this.setState({currentPreset: num});
+    const post = {
+     method: 'POST',
+     headers: {
+       'Accept': 'application/json, text/plain, */*',
+       'Content-Type': 'application/json',
+     }
+   };
 
+   /*fetch('/api/presets', post)
+   .then(response => response.json())
+   .then(response => {
+     return fetch('/api/current_preset', post)
+     console.log("log: " + post);
+    })*/
+  }
 
   render() {
     let menuclass="sidenav";
@@ -216,14 +228,21 @@ class App extends Component {
       menuclass+=" expanded";
     }
 
-    const buttons = this.state.presets.map(e => (
+    const buttons = this.state.presets.map(e => {
+      let cls="presetImgs";
+      if (e.num == this.state.currentPreset) {
+        cls+= " selectedImg";
+      }
+
+      return (
       <div key={e.num} className='imgRow'>
         <div className="imgCol">
           <div className="imgNumbers">{e.num}</div>
-          <img src={process.env.PUBLIC_URL + e.image_url} className="presetImgs" onClick={this.presetClicked}/>
+          <img src={process.env.PUBLIC_URL + e.image_url} className={cls} onClick={() => this.presetClicked(e.num)}/>
         </div>
       </div>
-    ));
+    )
+    });
 
     let credentialsMenu;
     let addressMenu;
