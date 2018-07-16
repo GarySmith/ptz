@@ -36,9 +36,14 @@ span {
   &.selectedImg {
     border: 3px solid blue;
   }
-  &.text {
-    font-size: 30px;
-  }
+}
+.imgNumbers {
+  font-size: 30px;
+  position: relative;
+  left: 10px;
+  top: 40px;
+  color: white;
+  text-shadow: 0 0 10px black;
 }
 
 .home {
@@ -104,7 +109,39 @@ span {
   font-size: 20px;
 }
 
-@media screen and (max-height: 450px) {
+@media screen and (max-width: 800px) {
   .sidenav {padding-top: 15px;}
   .sidenav a {font-size: 18px;}
+
+  .imgCol {
+    display: inline-block;
+    padding: 0px;
+  }
+  .imgRow {
+    display: inline-block;
+    text-align: left;
+    padding: 0px;
+  }
+  .presetImgs {
+    border: 3px solid white;
+    border-radius: 4px;
+    padding: 5px;
+
+    &.selectedImg {
+      border: 3px solid blue;
+    }
+   }
+  .imgNumbers {
+   /* font-size: 30px;
+    position: absolute;
+    top: 10px;
+    left: 50px;*/
+  }
+  .title {
+    font-size: 20px;
+    padding-bottom: 5px;
+  }
+  span {
+    font-size: 15px;
+  }
 }

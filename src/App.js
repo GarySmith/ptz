@@ -219,7 +219,7 @@ class App extends Component {
     const buttons = this.state.presets.map(e => (
       <div key={e.num} className='imgRow'>
         <div className="imgCol">
-          <div className="presetImgs text">{e.num}</div>
+          <div className="imgNumbers">{e.num}</div>
           <img src={process.env.PUBLIC_URL + e.image_url} className="presetImgs" onClick={this.presetClicked}/>
         </div>
       </div>
