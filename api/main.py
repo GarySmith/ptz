@@ -32,16 +32,45 @@ def get_all_presets():
     return jsonify(settings.get('presets', []))
 
 
-@app.route("/api/preset")
-def get_current_presets():
+@app.route("/api/presets/<preset>", methods=['POST'])
+def update_preset_image(preset):
+
+    # Get the payload from the image.  This might be better handled by
+    #    nginx/apache
+    return jsonify("Success")
+
+
+current_preset = 1
+
+@app.route("/api/current_preset", methods=['POST'])
+def change_current_preset():
+    """
+    Calls the camera to recall the current preset
+    """
+    sleep(0.5)
+
+    payload = request.get_json() or {}
+    preset = int(payload.get('current_preset', 0))
+    if preset < 0 or preset > 255:
+        abort(406, "Invalid preset")
+
+    # TODO(gary): Call the camera here
+    global current_preset
+    current_preset = preset
+
+    return jsonify("Success")
+
+
+@app.route("/api/current_preset", methods=['GET'])
+def get_current_preset():
     """
     Obtains the current coordinates from the camera and returns the
     corresponding preset.  Returns -1 if the current coordinates do not
     correspond to any preset
     """
 
-    # TODO(gary): Implement this logic
-    return jsonify(1);
+    # TODO(gary): Call the camera here
+    return jsonify({'current_preset': current_preset});
 
 
 @app.route("/api/calibrate", methods=['POST'])
@@ -94,12 +123,6 @@ def login():
         abort(401, 'Invalid credentidals')
 
 
-# Need apis for:
-#   Uploading an image for a given preset
-#   Setting the image url for a given preset
-#   getting, updating the IP address of the camera
-
-
 def get_settings():
     settings = {}
 
@@ -121,3 +144,8 @@ def save_settings(settings):
         pass
 
     return jsonify("Success")
+
+# TODO(gary) Need apis for:
+#   Uploading an image for a given preset
+#   Setting the image url for a given preset
+#   getting, updating the IP address of the camera
