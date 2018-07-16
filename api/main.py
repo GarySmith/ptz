@@ -4,6 +4,9 @@ import json
 import os
 app = Flask(__name__)
 
+# Default IP address used by the PTZ camera
+DEFAULT_IP_ADDRESS = "192.168.100.88"
+
 @app.route("/api/presets")
 def get_all_presets():
     """
@@ -145,7 +148,27 @@ def save_settings(settings):
 
     return jsonify("Success")
 
+
+@app.route("/api/camera_address", methods=['GET'])
+def get_camera_address():
+    camera_settings = get_settings().get('camera', {})
+    camera_address = camera_settings.get('ip_address', DEFAULT_IP_ADDRESS)
+    return jsonify({'ip_address': camera_address})
+
+
+@app.route("/api/camera_address", methods=['POST'])
+def update_camera_address():
+
+    info = request.get_json() or {}
+
+    settings = get_settings()
+    camera_settings = get_settings().get('camera', {})
+    camera_settings['ip_address'] = info['ip_address']
+
+    settings['camera'] = camera_settings
+    save_settings(settings)
+    return jsonify("Success")
+
+
 # TODO(gary) Need apis for:
 #   Uploading an image for a given preset
-#   Setting the image url for a given preset
-#   getting, updating the IP address of the camera
