@@ -29,7 +29,7 @@ def get_all_presets():
 
     """
     settings = get_settings()
-    return jsonify(settings.get('preseets', []))
+    return jsonify(settings.get('presets', []))
 
 
 @app.route("/api/preset")
@@ -49,6 +49,20 @@ def calibrate():
     coordinates of that position, storing them away for future reference
     """
     sleep(1)  # Emulate some elapsed time
+    settings = get_settings()
+
+    settings['presets']  = [{
+        'num': 1,
+        'image_url': '/images/1.jpg'
+    },{
+        'num': 2,
+        'image_url': '/images/2.jpg'
+    },{
+        'num': 3,
+        'image_url': '/images/3.jpg'
+    }]
+    save_settings(settings)
+
     return jsonify("Success")
 
 # TODO(gary): Configure apache to enable uploading and downloading files
@@ -81,3 +95,13 @@ def get_settings():
         pass
 
     return settings
+
+def save_settings(settings):
+
+    try:
+        with open("settings.json",  'w') as f:
+            json.dump(settings, f)
+    except:
+        pass
+
+    return jsonify("Success")
