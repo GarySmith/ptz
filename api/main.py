@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, request, abort
 from time import sleep
 import json
 import os
@@ -7,7 +7,7 @@ app = Flask(__name__)
 @app.route("/api/presets")
 def get_all_presets():
     """
-    Returns a json array:
+    Returns a json array, such as:
         [{
             "num": 1,
             "image_url": "/images/1.jpg",
@@ -39,6 +39,8 @@ def get_current_presets():
     corresponding preset.  Returns -1 if the current coordinates do not
     correspond to any preset
     """
+
+    # TODO(gary): Implement this logic
     return jsonify(1);
 
 
@@ -51,6 +53,7 @@ def calibrate():
     sleep(1)  # Emulate some elapsed time
     settings = get_settings()
 
+    # TODO(gary): Obtain this from the camera
     settings['presets']  = [{
         'num': 1,
         'image_url': '/images/1.jpg'
@@ -65,7 +68,7 @@ def calibrate():
 
     return jsonify("Success")
 
-# TODO(gary): Configure apache to enable uploading and downloading files
+# TODO(gary): Configure apache/nginx to enable uploading and downloading files
 #             directly rather than relying on flask for this.
 @app.route("/images/<path:name>", methods=['GET'])
 def get_image_file(name):
@@ -76,12 +79,25 @@ def get_image_file(name):
 
 @app.route("/api/login", methods=['POST'])
 def login():
-    return jsonify("Success")
+    info = request.get_json() or {}
+    username = info.get('username')
+    password = info.get('password')
+
+    accounts = get_settings().get('accounts', [])
+    for account in accounts:
+        if account['username'] == username and account['password'] == password:
+            return jsonify({
+                'display_name': account['display_name'],
+                'admin': account['admin']
+            })
+    else:
+        abort(401, 'Invalid credentidals')
+
 
 # Need apis for:
 #   Uploading an image for a given preset
 #   Setting the image url for a given preset
-#   Updating the IP address of the camera
+#   getting, updating the IP address of the camera
 
 
 def get_settings():
