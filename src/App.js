@@ -87,14 +87,45 @@ import './App.css';
 class Calibrate extends Component {
   constructor(props) {
     super(props);
+    this.state= {
+      presets: [],
+      message: '',
+    };
   }
-  render() {
-   return (
+  calibrate() {
+    const init = {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json',
+      }
+    };
+
+    fetch('/api/calibrate', init)
+    .then(response => response.json())
+    .then(response => {
+      this.setState({presets: response});
+      this.setState({message: 'Calibrate Clicked!'});
+    });
+   }
+   render() {
+      let buttons;
+    /*const buttons = this.state.presets.map(e => (
+      <div key={e.num} className='imgRow'>
+        <div className="imgCol">
+          <div className="presetImgs text">{e.num}</div>
+          <img src={process.env.PUBLIC_URL + e.image_url} className="presetImgs" onClick={this.presetClicked}/>
+        </div>
+      </div>
+    ));*/
+    return (
       <div>
         <div className="header">Calibrate</div>
         <div className="view">
-           <div className="imgRow viewDiv">Calibrate..?<textarea rows="5" cols="20"/></div>
-           <div className="imgRow viewDiv"><button>submit</button></div>
+           <div className="imgRow viewDiv">Calibrate:</div>
+           <div className="imgRow viewDiv"><button onClick={()=>this.calibrate()}>submit</button></div>
+           {buttons}
+           {this.state.message}
         </div>
       </div>
     );
@@ -168,11 +199,7 @@ class App extends Component {
 
   presetClicked = (e) => {
     let src = e.target.src;
-    if(e.target.className=="presetImgs selectedImg") {
-      e.target.className= "presetImgs";
-      this.setState({imgSelected: null});
-    }
-    else {
+    if(e.target.className=="presetImgs") {
       let oldPic = this.state.imgSelected;
       e.target.className+= " selectedImg";
       if(oldPic) {
@@ -240,7 +267,6 @@ class App extends Component {
         <div className="title">PTZ Camera App &#9925;</div>
         <center>
           <div className={homeMenu}>
-            <div className="header">Home</div>
             {buttons}
           </div>
         </center>
