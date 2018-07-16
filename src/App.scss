@@ -1,10 +1,19 @@
+@import url('https://fonts.googleapis.com/css?family=Advent+Pro');
 body {
     font-family: "Lato", sans-serif;
+   /* font-family: 'Advent Pro';*/
 }
 span {
   font-size: 30px;
   cursor: pointer;
   padding-left: 1%;
+}
+.about {
+  display: initial;
+  margin: 10px;
+  &.hidden {
+    display: none;
+  }
 }
 .imgCol {
   display: inline-block;
@@ -94,6 +103,7 @@ span {
 .title {
   font-size: 40px;
   text-align: center;
+
 }
 
 .header {

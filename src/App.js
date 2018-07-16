@@ -165,6 +165,7 @@ class App extends Component {
       showCalibrate: false,
       showUpdate: false,
       showHome: false,
+      showAbout: false,
 
     };
 
@@ -211,15 +212,15 @@ class App extends Component {
      headers: {
        'Accept': 'application/json, text/plain, */*',
        'Content-Type': 'application/json',
-     }
+     },
+     body: JSON.stringify({current_preset: num})
    };
 
-   /*fetch('/api/presets', post)
+   fetch('/api/current_preset', post)
    .then(response => response.json())
    .then(response => {
-     return fetch('/api/current_preset', post)
      console.log("log: " + post);
-    })*/
+    })
   }
 
   render() {
@@ -249,27 +250,35 @@ class App extends Component {
     let calibrateMenu;
     let updateMenu;
     let homeMenu;
+    let aboutMenu = "about hidden";
 
     if(this.state.showCredentials) {
       credentialsMenu = (<Login />);
       homeMenu = "home hidden";
+      aboutMenu = "about hidden";
     }
     else if(this.state.showAddress) {
       addressMenu = (<Address />);
       homeMenu = "home hidden";
+      aboutMenu = "about hidden";
     }
     else if(this.state.showCalibrate) {
       calibrateMenu = (<Calibrate />);
       homeMenu = "home hidden";
+      aboutMenu = "about hidden";
     }
     else if(this.state.showUpdate) {
       updateMenu = (<Update />);
       homeMenu = "home hidden";
+      aboutMenu = "about hidden";
     }
     else if(this.state.showHome) {
       homeMenu = "home";
+      aboutMenu = "about hidden";
+    } else if(this.state.showAbout) {
+      homeMenu = "home hidden";
+      aboutMenu = "about";
     }
-
     return (
       <div>
         <div>
@@ -280,6 +289,8 @@ class App extends Component {
             <a href="#" onClick={()=> this.sideButtonClicked("calibrate")}>Calibrate</a>
             <a href="#" onClick={()=> this.sideButtonClicked("update")}>Update/Upload Image</a>
             <a href="#" onClick={()=> this.sideButtonClicked("home")}>Home</a>
+            <a href="#" onClick={()=> this.sideButtonClicked("about")}>About</a>
+
           </div>
           <span onClick={(e) => this.openNav(e)}>&#9776; menu</span>
         </div>
@@ -289,6 +300,7 @@ class App extends Component {
             {buttons}
           </div>
         </center>
+       <center> <div className={aboutMenu}>Copyright Gary Smith and Holly Donis 2018</div></center>
         {credentialsMenu}
         {addressMenu}
         {calibrateMenu}
@@ -332,12 +344,16 @@ class App extends Component {
       this.setState({showAddress: false});
       this.setState({showCalibrate: false});
     }
-    else if(str=="home") {
+    else if(str=="home" || str=="about") {
       this.setState({showHome: true});
       this.setState({showCredentials: false});
       this.setState({showAddress: false});
       this.setState({showCalibrate: false});
       this.setState({showUpdate: false});
+      if(str=="about") {
+        this.setState({showHome: false});
+        this.setState({showAbout: true});
+      }
     }
   }
 }
