@@ -11,11 +11,13 @@ import './App.css';
         triedUser: '',
         triedPass: '',
         message: '',
+        sucess: false,
       };
     }
     submitClicked() {
       if((this.state.triedPass===this.state.password) && (this.state.triedUser===this.state.username)) {
         this.setState({message: 'Welcome user!'});
+        this.setState({sucess: true});
       }
       else {
         this.setState({message: 'Login failed.'});
@@ -42,7 +44,7 @@ import './App.css';
           <div className="header">Login</div>
           <div className="view">
              <div className="imgRow viewDiv">Username: <input type= "text" key="username" value={this.state.triedUser} onChange={this.updateUser.bind(this)}/></div>
-             <div className="imgRow viewDiv">Password: <input type= "text" value={this.state.triedPass} onChange={this.updatePass.bind(this)}/></div>
+             <div className="imgRow viewDiv">Password: <input type= "password" value={this.state.triedPass} onChange={this.updatePass.bind(this)}/></div>
              <div className="imgRow viewDiv"><button key="submit" onClick={() => this.submitClicked()}>submit</button></div>
              <div className={messageClass}>{this.state.message}</div>
           </div>
@@ -189,8 +191,10 @@ class App extends Component {
 
     const buttons = this.state.presets.map(e => (
       <div key={e.num} className='imgRow'>
-        {e.num}
-        <img src={process.env.PUBLIC_URL + e.image_url} className="presetImgs" onClick={this.presetClicked}/>
+        <div className="imgCol">
+          <div className="presetImgs text">{e.num}</div>
+          <img src={process.env.PUBLIC_URL + e.image_url} className="presetImgs" onClick={this.presetClicked}/>
+        </div>
       </div>
     ));
 
@@ -247,7 +251,7 @@ class App extends Component {
       </div>
     );
   }
-  closeNav() {
+  closeNav() {//false
     this.setState({expanded: false});
   }
   openNav() {
