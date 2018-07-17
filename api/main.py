@@ -4,32 +4,22 @@ import json
 import os
 app = Flask(__name__)
 
-# Default IP address used by the PTZ camera
+from api import camera
+
+# Default setting used by the PTZ camera
 DEFAULT_IP_ADDRESS = "192.168.100.88"
+DEFAULT_PTZ_PORT = 5678
 
 @app.route("/api/presets")
 def get_all_presets():
     """
-    Returns a json array, such as:
-        [{
-            "num": 1,
-            "image_url": "/images/1.jpg",
-         },
-         {
-            "num": 2,
-            "image_url": "/images/2.jpg",
-         },
-         {
-            "num": 3,
-            "image_url": "/images/3.jpg",
-         }
-        ]
+    Returns a json array, and each element of the array is on object with
+    the values:
+        num:  preset number (0-255)
+        image_url: URL of the image, relative to this host
 
     Note:
         The camera supports a maximum of 255 presets
-
-    Preset 0 is supported, and will be used as the default if set.
-
     """
     settings = get_settings()
     return jsonify(settings.get('presets', []))
@@ -43,23 +33,21 @@ def update_preset_image(preset):
     return jsonify("Success")
 
 
-current_preset = 1
-
 @app.route("/api/current_preset", methods=['POST'])
 def change_current_preset():
     """
     Calls the camera to recall the current preset
     """
-    sleep(0.5)
-
     payload = request.get_json() or {}
     preset = int(payload.get('current_preset', 0))
     if preset < 0 or preset > 255:
         abort(406, "Invalid preset")
 
-    # TODO(gary): Call the camera here
-    global current_preset
-    current_preset = preset
+    camera_settings = get_camera_settings()
+
+    camera.recall_preset(camera_settings['ip_address'],
+                         camera_settings['ptz_port'],
+                         preset)
 
     return jsonify("Success")
 
@@ -71,9 +59,25 @@ def get_current_preset():
     corresponding preset.  Returns -1 if the current coordinates do not
     correspond to any preset
     """
+    camera_settings = get_camera_settings()
 
-    # TODO(gary): Call the camera here
-    return jsonify({'current_preset': current_preset});
+    position = camera.get_position(camera_settings['ip_address'],
+                                   camera_settings['ptz_port'])
+
+    presets = get_settings().get('presets', [])
+
+    for preset in presets:
+        if position['zoom'] == preset['zoom'] and \
+           position['focus'] == preset['focus'] and \
+           position['pan'] == preset['pan'] and \
+           position['tilt'] == preset['tilt']:
+            return jsonify({'current_preset': preset['num']})
+    else:
+        return jsonify({'current_preset': -1})
+
+
+    # TODO(gary): Add extra logic to permit the value to be close to, but
+    # not exactly that corresponding to a preset
 
 
 @app.route("/api/calibrate", methods=['POST'])
@@ -82,20 +86,29 @@ def calibrate():
     Manipulates the camera to move to each preset and capture the
     coordinates of that position, storing them away for future reference
     """
-    sleep(1)  # Emulate some elapsed time
+    # sleep(1)  # Emulate some elapsed time
+
+    info = request.get_json() or {}
+    max_presets = info.get('max_presets', int(3))
+
     settings = get_settings()
 
-    # TODO(gary): Obtain this from the camera
-    settings['presets']  = [{
-        'num': 1,
-        'image_url': '/images/1.jpg'
-    },{
-        'num': 2,
-        'image_url': '/images/2.jpg'
-    },{
-        'num': 3,
-        'image_url': '/images/3.jpg'
-    }]
+    presets = []
+    # Create a new, ordered, empty sets of presets
+    for num in range(1, max_presets+1):
+        presets.append({'num': num,
+                        'image_url': '/images/{0}.jpg'.format(num) })
+
+    camera_settings = get_camera_settings()
+    ip = camera_settings['ip_address']
+    port = camera_settings['ptz_port']
+
+    for preset in presets:
+        camera.recall_preset(ip, port, preset['num'])
+        position = camera.get_position(ip, port)
+        preset.update(position)
+
+    settings['presets'] = presets
     save_settings(settings)
 
     return jsonify("Success")
@@ -150,9 +163,8 @@ def save_settings(settings):
 
 
 @app.route("/api/camera", methods=['GET'])
-def get_camera_settings():
-    camera_settings = get_settings().get('camera', {})
-    return jsonify(camera_settings)
+def get_camera():
+    return jsonify(get_camera_settings())
 
 
 @app.route("/api/camera", methods=['POST'])
@@ -160,15 +172,42 @@ def update_camera_settings():
 
     info = request.get_json() or {}
 
-    settings = get_settings()
-    camera_settings = get_settings().get('camera', {})
-    camera_settings['ip_address'] = info['ip_address']
-    camera_settings['ptz_port'] = int(info['ptz_port']) or 5678;
+    camera_settings = get_camera_settings()
+
+    if 'ip_address' in info:
+        camera_settings['ip_address'] = info['ip_address']
+
+    if 'ptz_port' in info:
+        camera_settings['ptz_port'] = int(info['ptz_port'])
 
     settings['camera'] = camera_settings
     save_settings(settings)
     return jsonify("Success")
 
 
+def get_camera_settings():
+
+    camera_settings = get_settings().get('camera', {})
+    if 'ip_address' not in camera_settings:
+        camera_settings['ip_address'] = DEFAULT_IP_ADDRESS
+
+    if 'ptz_port' not in camera_settings:
+        camera_settings['ptz_port'] = DEFAULT_PTZ_PORT
+
+    return camera_settings
+
+
 # TODO(gary) Need apis for:
 #   Uploading an image for a given preset
+
+@app.route("/api/position", methods=['GET'])
+def get_position():
+
+    camera_settings = get_camera_settings()
+
+    position = camera.get_position(camera_settings['ip_address'],
+                                   camera_settings['ptz_port'])
+
+    # Do some math to figure out which is the closest known preset
+
+    return jsonify(position)

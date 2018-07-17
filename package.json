@@ -21,7 +21,7 @@
   },
   "proxy": {
     "/api": { 
-      "target": "http://192.168.1.49:5100"
+      "target": "http://localhost:5100"
     }
   }
 }
