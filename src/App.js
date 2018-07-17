@@ -6,54 +6,57 @@ import './App.css';
     constructor(props) {
       super(props);
       this.state = {
-        username: '',  //user, password
-        password: '',
         triedUser: '',
         triedPass: '',
-        message: '',
-        sucess: false,
+        success: false,
+        attempts: 0,
       };
     }
-    componentDidMount = () => {
-      const init = {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json, text/plain, */*',
-          'Content-Type': 'application/json',
-        }
-      };
+    submitClicked() {
+      let attemptedUsername = this.state.triedUser;
+      let attemptedPassword = this.state.triedPass;
 
-      fetch('/api/login', init)
+      const post = {
+        method: 'POST',
+        headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({username: attemptedUsername, password: attemptedPassword})
+      };
+      fetch('/api/login', post)
       .then(response => response.json())
       .then(response => {
-        this.setState({username: response.username, password: response.password});
-        console.log(this.state.username + " " + this.state.password);
-      })
-   }
-    submitClicked() {
-      if((this.state.triedPass===this.state.password) && (this.state.triedUser===this.state.username)) {
-        this.setState({message: 'Welcome user!'});
-        this.setState({sucess: true});
-      }
-      else {
-        this.setState({message: 'Login failed.'});
-      }
+         console.log("sent ip and port to api");
+         this.setState({success: true});
+         this.setState({attemps: 1});
+       })
+      .catch((error)=> {
+        console.log("login and username were invalid: " + attemptedUsername +", " +attemptedPassword);
+        this.setState({success: false});
+        this.setState({attempts: 1});
+      });
     }
+
     updateUser(evt) {
       this.setState({triedUser: evt.target.value});
     }
     updatePass(evt) {
       this.setState({triedPass: evt.target.value});
     }
-    render() {
 
-    //fix coloring!!!!
+    render() {
+     let message = "";
      let messageClass='imgRow viewDiv';
-     if(this.state.message==='Welcome user!') {
+     if(this.state.success) {
         messageClass='imgRow viewDiv green';
+        message = "Welcome user!";
+        console.log("here");
      }
-     else if(this.state.message==='Login failed.') {
-        messageClass+='imgRow viewDiv red';
+     else if(this.state.attempts>0){
+        message = "Login failed.";
+        messageClass ='imgRow viewDiv red';
+        console.log("bad");
      }
      return (
        <div>
@@ -62,7 +65,7 @@ import './App.css';
              <div className="imgRow viewDiv">Username: <input type= "text" key="username" value={this.state.triedUser} onChange={this.updateUser.bind(this)}/></div>
              <div className="imgRow viewDiv">Password: <input type= "password" value={this.state.triedPass} onChange={this.updatePass.bind(this)}/></div>
              <div className="imgRow viewDiv"><button key="submit" onClick={() => this.submitClicked()}>submit</button></div>
-             <div className={messageClass}>{this.state.message}</div>
+             <div className={messageClass}>{message}</div>
           </div>
         </div>
       );
