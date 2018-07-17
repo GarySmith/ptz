@@ -149,21 +149,21 @@ def save_settings(settings):
     return jsonify("Success")
 
 
-@app.route("/api/camera_address", methods=['GET'])
-def get_camera_address():
+@app.route("/api/camera", methods=['GET'])
+def get_camera_settings():
     camera_settings = get_settings().get('camera', {})
-    camera_address = camera_settings.get('ip_address', DEFAULT_IP_ADDRESS)
-    return jsonify({'ip_address': camera_address})
+    return jsonify(camera_settings)
 
 
-@app.route("/api/camera_address", methods=['POST'])
-def update_camera_address():
+@app.route("/api/camera", methods=['POST'])
+def update_camera_settings():
 
     info = request.get_json() or {}
 
     settings = get_settings()
     camera_settings = get_settings().get('camera', {})
     camera_settings['ip_address'] = info['ip_address']
+    camera_settings['ptz_port'] = int(info['ptz_port']) or 5678;
 
     settings['camera'] = camera_settings
     save_settings(settings)
