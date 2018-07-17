@@ -57,27 +57,84 @@ import './App.css';
     constructor(props) {
       super(props);
         this.state= {
-          inputValue: '',
+          addressInput: '128.0.0.0',
           currentAddress: '128.0.0.0',
+          portInput: '50',
+          currentPort: '50',
+          disableAdd: false,
+          disablePort: false,
         };
     }
-    enterClicked() {
-      if(this.state.inputValue!='') {
-        let tempAdd= this.state.inputValue;
-        this.setState({currentAddress: tempAdd});
-      }
+    componentDidMount = () => {
+      const init = {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'Content-Type': 'application/json',
+        }
+      };
+
+      fetch('/api/camera', init)
+      .then(response => response.json())
+      .then(response => {
+        this.setState({addressInput: response.ip_address, currentAddress: response.ip_address, currentPort: response.ptz_port, portInput: response.ptz_port});
+      })
+   }
+
+    updateAddressInput(evt) {
+       const IPV4ADDRESS = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+       const val = evt.target.value;
+       this.setState({addressInput: val});
+       console.log("changed add: "+ val);
+       if(IPV4ADDRESS.exec(val)===null) {
+        this.setState({disableAdd:true}); //IP address is invalid, so disable button
+       }
+       else { //IP address is valid, enable button
+        this.setState({disableAdd:false});
+       }
     }
-    updateInputValue(evt) {
-       this.setState({inputValue: evt.target.value});
+    changeAddress() {
+      let tempAdd= this.state.addressInput;
+      this.setState({currentAddress: tempAdd});
+      console.log("add= "+tempAdd);
+      //const post = {
+     //   method: 'POST',
+     //   headers: {
+        //'Accept': 'application/json, text/plain, */*',
+     //   'Content-Type': 'application/json',
+     //   },
+    //    body: JSON.stringify({ip_address: tempAdd, ptz_port: }); //take out state variable 'current' and combine functions (1 button) !!!!!!!!!!!!!!!!!
+    //  };
+    }
+    updatePortInput(evt) {
+       const val = evt.target.value;
+       this.setState({portInput: val});
+       console.log("changed port: "+ val);
+       if(0 < val && val < 65536) {  //if port number is between 1 and 65536, set disable button to false (enable button)
+        this.setState({disablePort: false});
+       }
+       else {   //if port number is less than 0 or greater than 65535, disable button
+          this.setState({disablePort: true});
+       }
+    }
+    changePort() {
+      let tempPort= this.state.portInput;
+      this.setState({currentPort: tempPort});
+      console.log("port= "+tempPort);
     }
     render() {
       return (
       <div>
-        <div className="header">IP Address</div>
+        <div className="header">Camera IP Address</div>
         <div className="view">
-          <div className="imgRow viewDiv">Current IP Address: {this.state.currentAddress}</div>
-          <div className="imgRow viewDiv">Change IP Address:<input type= "text" key="newAddress" value={this.state.inputValue} onChange={this.updateInputValue.bind(this)}></input></div>
-          <div className="imgRow viewDiv"><button key="addressButton" onClick={() => this.enterClicked()}>Enter</button></div>
+          <div className="imgRow viewDiv">IP Address:<input type= "text" key="newAddress"
+            value={this.state.addressInput} onChange={this.updateAddressInput.bind(this)}></input></div>
+          <div className="imgRow viewDiv"><button key="addressButton" disabled={this.state.disableAdd} onClick={() => this.changeAddress()}>Enter</button></div>
+
+          <div className="imgRow viewDiv">PTZ Port:<input type= "text" key="newPort"
+            value={this.state.portInput} onChange={this.updatePortInput.bind(this)}></input></div>
+          <div className="imgRow viewDiv"><button key="addressButton" disabled={this.state.disablePort} onClick={() => this.changePort()}>Enter</button></div>
+
         </div>
       </div>
     );
@@ -286,20 +343,20 @@ class App extends Component {
     }
     return (
       <div>
-        <div>
+        <div className="topBar">
           <div key="sideId" className={menuclass}>
             <a href="javascript:void(0)" className="closebtn" onClick={() => this.closeNav()}> &times;</a>
             <a href="#" onClick={()=> this.sideButtonClicked("login")}>Login</a>
-            <a href="#" onClick={()=> this.sideButtonClicked("address")}>Address</a>
+            <a href="#" onClick={()=> this.sideButtonClicked("address")}>Camera IP Address</a>
             <a href="#" onClick={()=> this.sideButtonClicked("calibrate")}>Calibrate</a>
             <a href="#" onClick={()=> this.sideButtonClicked("update")}>Update/Upload Image</a>
             <a href="#" onClick={()=> this.sideButtonClicked("home")}>Home</a>
             <a href="#" onClick={()=> this.sideButtonClicked("about")}>About</a>
 
           </div>
-          <span onClick={(e) => this.openNav(e)}>&#9776; menu</span>
         </div>
         <div className="title">PTZ Camera App &#9925;</div>
+        <span onClick={(e) => this.openNav(e)}>&#9776;</span>
         <center>
           <div className={homeMenu}>
             {buttons}
