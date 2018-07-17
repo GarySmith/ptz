@@ -9,7 +9,7 @@ class Address extends Component {
         disableAdd: false,
         disablePort: false,
       };
-  }
+  } //this.props.admin
   componentDidMount = () => {
     const init = {
       method: 'GET',
@@ -24,6 +24,9 @@ class Address extends Component {
     .then(response => {
       this.setState({addressInput: response.ip_address, portInput: response.ptz_port});
     })
+    if(!this.props.admin) {
+      this.setState({disableAdd:true, disablePort: true});
+    }
   }
 
   updateAddressInput(evt) {
@@ -34,15 +37,15 @@ class Address extends Component {
       if(IPV4ADDRESS.exec(val)===null) {
       this.setState({disableAdd:true}); //IP address is invalid, so disable button
       }
-      else { //IP address is valid, enable button
-      this.setState({disableAdd:false});
+      else if (this.props.admin) { //IP address is valid and admin is logged in: enable button
+        this.setState({disableAdd:false});
       }
   }
   updatePortInput(evt) {
       const val = evt.target.value;
       this.setState({portInput: val});
       console.log("changed port: "+ val);
-      if(0 < val && val < 65536) {  //if port number is between 1 and 65536, set disable button to false (enable button)
+      if(0 < val && val < 65536 && this.props.admin) {  //if port number is between 1 and 65536, set disable button to false (enable button)
       this.setState({disablePort: false});
       }
       else {   //if port number is less than 0 or greater than 65535, disable button

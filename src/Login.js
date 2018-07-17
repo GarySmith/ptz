@@ -10,7 +10,7 @@ class Login extends Component {
       attempts: 0,
     };
   }
-  submitClicked() {
+  submitClicked = () => {
     let attemptedUsername = this.state.triedUser;
     let attemptedPassword = this.state.triedPass;
 
@@ -25,14 +25,12 @@ class Login extends Component {
     fetch('/api/login', post)
     .then(response => response.json())
     .then(response => {
-        console.log("sent ip and port to api");
         this.setState({success: true});
         this.setState({attempts: 1});
-        this.props.onSuccess(attemptedUsername);
+        this.props.onSuccess(attemptedUsername, response.display_name, response.admin);
       })
     .catch((error)=> {
       console.log(error);
-      console.log("login and username were invalid: " + attemptedUsername +", " +attemptedPassword);
       this.setState({success: false});
       this.setState({attempts: 1});
     });
@@ -51,22 +49,24 @@ class Login extends Component {
     if(this.state.success) {
       messageClass='imgRow viewDiv green';
       message = "Welcome user!";
-      console.log("here");
     }
     else if(this.state.attempts>0){
       message = "Login failed.";
       messageClass ='imgRow viewDiv red';
-      console.log("bad");
     }
     return (
       <div>
         <div className="header">Login</div>
-        <div className="view">
-            <div className="imgRow viewDiv">Username: <input type= "text" key="username" value={this.state.triedUser} onChange={this.updateUser.bind(this)}/></div>
-            <div className="imgRow viewDiv">Password: <input type= "password" value={this.state.triedPass} onChange={this.updatePass.bind(this)}/></div>
-            <div className="imgRow viewDiv"><button key="submit" onClick={() => this.submitClicked()}>submit</button></div>
+        <form className="view" onSubmit={this.submitClicked}>
+            <div className="imgRow viewDiv">Username:
+              <input type= "text" key="username" autoFocus='true' value={this.state.triedUser} onChange={this.updateUser.bind(this)}/></div>
+
+            <div className="imgRow viewDiv">Password:
+              <input type= "password" value={this.state.triedPass} onChange={this.updatePass.bind(this)}/></div>
+
+            <div className="imgRow viewDiv"><button key="submit" onClick={this.submitClicked}>submit</button></div>
             <div className={messageClass}>{message}</div>
-        </div>
+        </form>
       </div>
     );
     }

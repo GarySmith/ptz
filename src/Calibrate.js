@@ -6,7 +6,14 @@ class Calibrate extends Component {
     this.state= {
       presets: [],
       message: '',
+      numPresets: 10,
+      disableButton: true,
     };
+  }
+  componentDidMount = () => {
+    if(this.props.admin) {
+     this.setState({disableButton: false});
+    }
   }
   calibrate() {
     const init = {
@@ -24,25 +31,24 @@ class Calibrate extends Component {
       this.setState({message: 'Calibrate Clicked!'});
     });
    }
+  updateSlider(evt) {
+    const val = evt.target.value;
+    this.setState({numPresets: val});
+    console.log('changed val:' + val);
+  }
+
    render() {
-      let buttons;
-    /*const buttons = this.state.presets.map(e => (
-      <div key={e.num} className='imgRow'>
-        <div className="imgCol">
-          <div className="presetImgs text">{e.num}</div>
-          <img src={process.env.PUBLIC_URL + e.image_url} className="presetImgs" onClick={this.presetClicked}/>
-        </div>
-      </div>
-    ));*/
     return (
       <div>
         <div className="header">Calibrate</div>
-        <div className="view">
-           <div className="imgRow viewDiv">Calibrate:</div>
-           <div className="imgRow viewDiv"><button onClick={()=>this.calibrate()}>submit</button></div>
-           {buttons}
-           {this.state.message}
+        <center>
+        <div className="slidecontainer">
+          <input type="range" min="1" max="255" value={this.state.numPresets} className="slider" onChange={this.updateSlider.bind(this)}></input>
         </div>
+        <p>Max number of presets: {this.state.numPresets}</p>
+        <div><button onClick={()=>this.calibrate()} disabled={this.state.disableButton}>submit</button></div>
+        {this.state.message}
+        </center>
       </div>
     );
    }

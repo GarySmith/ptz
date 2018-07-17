@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
+//import logo from './logo.svg';
 import './App.css';
 import Login from './Login.js';
 import Address from './Address.js';
@@ -23,45 +23,39 @@ class App extends Component {
       showAbout: false,
       pending: false,
       username: '',
+      validLogin: false,
+      admin: false,
+      display_name: '',
     };
-
-    this.hasServer = true;
   }
 
   componentDidMount = () => {
-    if (this.hasServer) {
-      const init = {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json, text/plain, */*',
-          'Content-Type': 'application/json',
-        }
-      };
+    const init = {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json',
+      }
+    };
 
-      fetch('/api/presets', init)
-      .then(response => response.json())
-      .then(response => {
-        this.setState({presets: response});
-        return fetch('/api/current_preset', init)
-      })
-      .then(response => response.json())
-      .then(response => {
-        console.log('current '+response.current_preset);
-        this.setState({currentPreset: response.current_preset});
-      })
-    } else {
-      this.setState({presets: [{
-          "num": 1,
-          "image_url": "/images/1.jpg",
-        },{
-          "num": 2,
-          "image_url": "/images/2.jpg",
-        }]});
-    }
+    fetch('/api/presets', init)
+    .then(response => response.json())
+    .then(response => {
+      this.setState({presets: response});
+      return fetch('/api/current_preset', init)
+    })
+    .then(response => response.json())
+    .then(response => {
+      console.log('current '+response.current_preset);
+      this.setState({currentPreset: response.current_preset});
+    })
   }
 
   presetClicked = (num) => {
     console.log(num);
+    if(!this.state.validLogin) {
+      return;
+    }
     this.setState({currentPreset: num, pending: true});
     const post = {
      method: 'POST',
@@ -80,9 +74,13 @@ class App extends Component {
     })
   }
 
-  onSuccess = (username) => {
+  onSuccess = (username, display_name, admin) => {
     console.log("this.onSuccess here");
     this.setState({username: username});
+    this.setState({validLogin: true});
+    this.setState({display_name: display_name});
+    this.setState({admin: admin});
+    console.log("username: " + username + ", display_name:" + display_name + ", admin: " + admin);
   }
   render() {
     let menuclass="sidenav";
@@ -92,7 +90,7 @@ class App extends Component {
 
     const buttons = this.state.presets.map(e => {
       let cls="presetImgs";
-      if (e.num == this.state.currentPreset) {
+      if (e.num === this.state.currentPreset) {
         if(this.state.pending) {
           cls+=" pending";
         } else {
@@ -104,7 +102,7 @@ class App extends Component {
       <div key={e.num} className='imgRow'>
         <div className="imgCol">
           <div className="imgNumbers">{e.num}</div>
-          <img src={process.env.PUBLIC_URL + e.image_url} className={cls} onClick={() => this.presetClicked(e.num)}/>
+          <img src={process.env.PUBLIC_URL + e.image_url} alt="" className={cls} onClick={() => this.presetClicked(e.num)}/>
         </div>
       </div>
     )
@@ -123,17 +121,17 @@ class App extends Component {
       aboutMenu = "about hidden";
     }
     else if(this.state.showAddress) {
-      addressMenu = (<Address />);
+      addressMenu = (<Address admin={this.state.admin}/>); //only admin
       homeMenu = "home hidden";
       aboutMenu = "about hidden";
     }
     else if(this.state.showCalibrate) {
-      calibrateMenu = (<Calibrate />);
+      calibrateMenu = (<Calibrate admin={this.state.admin}/>);  //only admin
       homeMenu = "home hidden";
       aboutMenu = "about hidden";
     }
     else if(this.state.showUpdate) {
-      updateMenu = (<Update />);
+      updateMenu = (<Update admin={this.state.admin}/>);  //only admin
       homeMenu = "home hidden";
       aboutMenu = "about hidden";
     }
@@ -146,8 +144,8 @@ class App extends Component {
     }
 
     let welcomeMessage = "";
-    if(this.state.username!="") {
-      welcomeMessage = "Hello, " + this.state.username;
+    if(this.state.validLogin) {
+      welcomeMessage = "Hello, " + this.state.display_name;
     }
     return (
       <div>
@@ -194,34 +192,34 @@ class App extends Component {
       this.setState({showCalibrate: false});
       this.setState({showUpdate: false});
     }
-    else if(str=="address") {
+    else if(str==="address") {
       this.setState({showAddress: true});
       this.setState({showCredentials: false});
       this.setState({showHome: false});
       this.setState({showCalibrate: false});
       this.setState({showUpdate: false});
     }
-    else if(str=="calibrate") {
+    else if(str==="calibrate") {
       this.setState({showCalibrate: true});
       this.setState({showHome: false});
       this.setState({showAddress: false});
       this.setState({showCredentials: false});
       this.setState({showUpdate: false});
     }
-    else if(str=="update") {
+    else if(str==="update") {
       this.setState({showUpdate: true});
       this.setState({showHome: false});
       this.setState({showCredentials: false});
       this.setState({showAddress: false});
       this.setState({showCalibrate: false});
     }
-    else if(str=="home" || str=="about") {
+    else if(str==="home" || str==="about") {
       this.setState({showHome: true});
       this.setState({showCredentials: false});
       this.setState({showAddress: false});
       this.setState({showCalibrate: false});
       this.setState({showUpdate: false});
-      if(str=="about") {
+      if(str==="about") {
         this.setState({showHome: false});
         this.setState({showAbout: true});
       }
