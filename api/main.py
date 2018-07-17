@@ -38,7 +38,7 @@ def change_current_preset():
     """
     Calls the camera to recall the current preset
     """
-    payload = request.get_json() or {}
+    payload = request.get_json()
     preset = int(payload.get('current_preset', 0))
     if preset < 0 or preset > 255:
         abort(406, "Invalid preset")
@@ -87,8 +87,10 @@ def calibrate():
     coordinates of that position, storing them away for future reference
     """
     # sleep(1)  # Emulate some elapsed time
+    info = {}
+    if request.content_length:
+        info = request.get_json()
 
-    info = request.get_json() or {}
     max_presets = info.get('max_presets', int(3))
 
     settings = get_settings()
@@ -124,7 +126,7 @@ def get_image_file(name):
 
 @app.route("/api/login", methods=['POST'])
 def login():
-    info = request.get_json() or {}
+    info = request.get_json()
     username = info.get('username')
     password = info.get('password')
 
@@ -170,7 +172,7 @@ def get_camera():
 @app.route("/api/camera", methods=['POST'])
 def update_camera_settings():
 
-    info = request.get_json() or {}
+    info = request.get_json()
 
     camera_settings = get_camera_settings()
 
