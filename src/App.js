@@ -6,14 +6,30 @@ import './App.css';
     constructor(props) {
       super(props);
       this.state = {
-        username: 'church',
-        password: '0000',
+        username: '',  //user, password
+        password: '',
         triedUser: '',
         triedPass: '',
         message: '',
         sucess: false,
       };
     }
+    componentDidMount = () => {
+      const init = {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'Content-Type': 'application/json',
+        }
+      };
+
+      fetch('/api/login', init)
+      .then(response => response.json())
+      .then(response => {
+        this.setState({username: response.username, password: response.password});
+        console.log(this.state.username + " " + this.state.password);
+      })
+   }
     submitClicked() {
       if((this.state.triedPass===this.state.password) && (this.state.triedUser===this.state.username)) {
         this.setState({message: 'Welcome user!'});
@@ -58,9 +74,7 @@ import './App.css';
       super(props);
         this.state= {
           addressInput: '128.0.0.0',
-          currentAddress: '128.0.0.0',
           portInput: '50',
-          currentPort: '50',
           disableAdd: false,
           disablePort: false,
         };
@@ -77,7 +91,7 @@ import './App.css';
       fetch('/api/camera', init)
       .then(response => response.json())
       .then(response => {
-        this.setState({addressInput: response.ip_address, currentAddress: response.ip_address, currentPort: response.ptz_port, portInput: response.ptz_port});
+        this.setState({addressInput: response.ip_address, portInput: response.ptz_port});
       })
    }
 
@@ -93,19 +107,6 @@ import './App.css';
         this.setState({disableAdd:false});
        }
     }
-    changeAddress() {
-      let tempAdd= this.state.addressInput;
-      this.setState({currentAddress: tempAdd});
-      console.log("add= "+tempAdd);
-      //const post = {
-     //   method: 'POST',
-     //   headers: {
-        //'Accept': 'application/json, text/plain, */*',
-     //   'Content-Type': 'application/json',
-     //   },
-    //    body: JSON.stringify({ip_address: tempAdd, ptz_port: }); //take out state variable 'current' and combine functions (1 button) !!!!!!!!!!!!!!!!!
-    //  };
-    }
     updatePortInput(evt) {
        const val = evt.target.value;
        this.setState({portInput: val});
@@ -117,23 +118,43 @@ import './App.css';
           this.setState({disablePort: true});
        }
     }
-    changePort() {
-      let tempPort= this.state.portInput;
-      this.setState({currentPort: tempPort});
-      console.log("port= "+tempPort);
+    submit() {
+      let address = this.state.addressInput;
+      console.log("address = " + address);
+
+      let port = this.state.portInput;
+      console.log("port= "+ port);
+
+        const post = {
+          method: 'POST',
+          headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ip_address: address, ptz_port: port})
+       };
+       fetch('/api/camera', post)
+      .then(response => response.json())
+      .then(response => {
+         console.log("sent ip and port to api");
+      })
     }
+
     render() {
+      let disableButton = this.state.disablePort || this.state.disableAdd;
       return (
       <div>
         <div className="header">Camera IP Address</div>
         <div className="view">
+
           <div className="imgRow viewDiv">IP Address:<input type= "text" key="newAddress"
             value={this.state.addressInput} onChange={this.updateAddressInput.bind(this)}></input></div>
-          <div className="imgRow viewDiv"><button key="addressButton" disabled={this.state.disableAdd} onClick={() => this.changeAddress()}>Enter</button></div>
 
           <div className="imgRow viewDiv">PTZ Port:<input type= "text" key="newPort"
             value={this.state.portInput} onChange={this.updatePortInput.bind(this)}></input></div>
-          <div className="imgRow viewDiv"><button key="addressButton" disabled={this.state.disablePort} onClick={() => this.changePort()}>Enter</button></div>
+
+          <div className="imgRow viewDiv">
+            <button key="addressButton" disabled={disableButton} onClick={() => this.submit()}>Enter</button></div>
 
         </div>
       </div>
