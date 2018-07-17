@@ -9,7 +9,7 @@ span {
   cursor: pointer;
   padding-left: 1%;
   position: relative;
-  top: -85px;
+  top: -110px;
 }
 .about {
   display: initial;
@@ -120,7 +120,15 @@ span {
   color: white;
 
 }
-
+.username {
+  /*left: -5px;*/
+  top: -80px;
+  position: relative;
+  text-align: right;
+  color: white;
+  margin-right: 1%;
+  font-size: 20px;
+}
 .header {
   font-size: 30px;
   text-align: center;

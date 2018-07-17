@@ -29,9 +29,11 @@ import './App.css';
       .then(response => {
          console.log("sent ip and port to api");
          this.setState({success: true});
-         this.setState({attemps: 1});
+         this.setState({attempts: 1});
+         this.props.onSuccess(attemptedUsername);
        })
       .catch((error)=> {
+        console.log(error);
         console.log("login and username were invalid: " + attemptedUsername +", " +attemptedPassword);
         this.setState({success: false});
         this.setState({attempts: 1});
@@ -248,6 +250,7 @@ class App extends Component {
       showHome: false,
       showAbout: false,
       pending: false,
+      username: '',
     };
 
     this.hasServer = true;
@@ -305,6 +308,10 @@ class App extends Component {
     })
   }
 
+  onSuccess = (username) => {
+    console.log("this.onSuccess here");
+    this.setState({username: username});
+  }
   render() {
     let menuclass="sidenav";
     if(this.state.expanded) {
@@ -339,7 +346,7 @@ class App extends Component {
     let aboutMenu = "about hidden";
 
     if(this.state.showCredentials) {
-      credentialsMenu = (<Login />);
+      credentialsMenu = (<Login onSuccess={this.onSuccess}/>);
       homeMenu = "home hidden";
       aboutMenu = "about hidden";
     }
@@ -365,6 +372,11 @@ class App extends Component {
       homeMenu = "home hidden";
       aboutMenu = "about";
     }
+
+    let welcomeMessage = "";
+    if(this.state.username!="") {
+      welcomeMessage = "Hello, " + this.state.username;
+    }
     return (
       <div>
         <div className="topBar">
@@ -380,6 +392,7 @@ class App extends Component {
           </div>
         </div>
         <div className="title">PTZ Camera App &#9925;</div>
+        <div className="username">{welcomeMessage}</div>
         <span onClick={(e) => this.openNav(e)}>&#9776;</span>
         <center>
           <div className={homeMenu}>
