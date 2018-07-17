@@ -37,6 +37,9 @@ span {
     color: red;
   }
 }
+@keyframes blink {
+  50% { border-color: blue; }
+}
 .presetImgs {
   border: 3px solid white;
   border-radius: 4px;
@@ -44,6 +47,9 @@ span {
 
   &.selectedImg {
     border: 3px solid blue;
+  }
+  &.pending {
+    animation: blink .1s step-end infinite alternate;
   }
 }
 .imgNumbers {

@@ -166,7 +166,7 @@ class App extends Component {
       showUpdate: false,
       showHome: false,
       showAbout: false,
-
+      pending: false,
     };
 
     this.hasServer = true;
@@ -206,7 +206,7 @@ class App extends Component {
 
   presetClicked = (num) => {
     console.log(num);
-    this.setState({currentPreset: num});
+    this.setState({currentPreset: num, pending: true});
     const post = {
      method: 'POST',
      headers: {
@@ -219,7 +219,8 @@ class App extends Component {
    fetch('/api/current_preset', post)
    .then(response => response.json())
    .then(response => {
-     console.log("log: " + post);
+     console.log("updated!");
+    this.setState({pending: false});
     })
   }
 
@@ -232,7 +233,11 @@ class App extends Component {
     const buttons = this.state.presets.map(e => {
       let cls="presetImgs";
       if (e.num == this.state.currentPreset) {
-        cls+= " selectedImg";
+        if(this.state.pending) {
+          cls+=" pending";
+        } else {
+          cls+= " selectedImg";
+        }
       }
 
       return (
