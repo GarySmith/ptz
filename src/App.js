@@ -75,12 +75,7 @@ class App extends Component {
   }
 
   onSuccess = (username, display_name, admin) => {
-    console.log("this.onSuccess here");
-    this.setState({username: username});
-    this.setState({validLogin: true});
-    this.setState({display_name: display_name});
-    this.setState({admin: admin});
-    console.log("username: " + username + ", display_name:" + display_name + ", admin: " + admin);
+    this.setState({username: username, validLogin: true, display_name: display_name, admin: admin});
   }
   render() {
     let menuclass="sidenav";
@@ -114,6 +109,7 @@ class App extends Component {
     let updateMenu;
     let homeMenu;
     let aboutMenu = "about hidden";
+
 
     if(this.state.showCredentials) {
       credentialsMenu = (<Login onSuccess={this.onSuccess}/>);
@@ -186,42 +182,22 @@ class App extends Component {
   sideButtonClicked(str) {
     this.closeNav();
     if(str=="login") {
-      this.setState({showCredentials: true});
-      this.setState({showHome: false});
-      this.setState({showAddress: false});
-      this.setState({showCalibrate: false});
-      this.setState({showUpdate: false});
+      this.setState({showCredentials: true, showHome: false,
+        showAddress: false, showCalibrate: false, showUpdate: false});
     }
     else if(str==="address") {
-      this.setState({showAddress: true});
-      this.setState({showCredentials: false});
-      this.setState({showHome: false});
-      this.setState({showCalibrate: false});
-      this.setState({showUpdate: false});
+      this.setState({showAddress: true, showCredentials: false, showHome: false, showCalibrate: false, showUpdate: false});
     }
     else if(str==="calibrate") {
-      this.setState({showCalibrate: true});
-      this.setState({showHome: false});
-      this.setState({showAddress: false});
-      this.setState({showCredentials: false});
-      this.setState({showUpdate: false});
+      this.setState({showAddress: false, showCredentials: false, showHome: false, showCalibrate: true, showUpdate: false});
     }
     else if(str==="update") {
-      this.setState({showUpdate: true});
-      this.setState({showHome: false});
-      this.setState({showCredentials: false});
-      this.setState({showAddress: false});
-      this.setState({showCalibrate: false});
+      this.setState({showAddress: false, showCredentials: false, showHome: false, showCalibrate: false, showUpdate: true});
     }
     else if(str==="home" || str==="about") {
-      this.setState({showHome: true});
-      this.setState({showCredentials: false});
-      this.setState({showAddress: false});
-      this.setState({showCalibrate: false});
-      this.setState({showUpdate: false});
+      this.setState({showAddress: false, showCredentials: false, showHome: true, showCalibrate: false, showUpdate: false});
       if(str==="about") {
-        this.setState({showHome: false});
-        this.setState({showAbout: true});
+        this.setState({showHome: false, showAbout: true});
       }
     }
   }
