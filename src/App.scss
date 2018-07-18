@@ -112,24 +112,46 @@ span {
     color: darkgray;
     cursor: pointer;
   }
+  &.hidden {
+    display:none;
+  }
 }
 
 .title {
   font-size: 30px;
   text-align: center;
   position: relative;
-  top: -50px;
+  top: -45px;
   color: white;
 
 }
 .username {
   /*left: -5px;*/
-  top: -80px;
+  top: -70px;
   position: relative;
   text-align: right;
   color: white;
-  margin-right: 1%;
+  margin-right: 2%;
   font-size: 20px;
+}
+.logout {
+    position: relative;
+    top: -23px;
+    left: 95%;
+    color: lightgray;
+    width: 5%;
+
+  &:hover {
+    color: white;
+    cursor: pointer;
+  }
+  &.hidden {
+    display: none;
+  }
+}
+.welcomeMessage {
+  position: relative;
+  left: -100px;
 }
 .header {
   font-size: 30px;
@@ -177,6 +199,13 @@ slider::-moz-range-thumb {
   cursor: pointer;
 
 }
+.loginForm {
+
+  &.hidden {
+    display: none;
+  }
+}
+
 @media screen and (max-width: 800px) {
   .sidenav {
     padding-top: 15px;

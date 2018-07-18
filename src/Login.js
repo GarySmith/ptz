@@ -44,8 +44,18 @@ class Login extends Component {
   updatePass(evt) {
     this.setState({triedPass: evt.target.value});
   }
+  logout = () => {
 
+  }
   render() {
+    let loginClass="";
+    if(this.state.success) {
+      loginClass="loginForm hidden";
+      console.log("success here! " + loginClass);
+    } else {
+       let loginClass="loginForm";
+    }
+
     let message = "";
     let messageClass='imgRow viewDiv';
     if(this.state.success) {
@@ -58,6 +68,7 @@ class Login extends Component {
     }
     return (
       <div>
+        <div className={loginClass}>
         <div className="header">Login</div>
         <form className="view" onSubmit={this.submitClicked}>
             <div className="imgRow viewDiv">Username:
@@ -69,6 +80,7 @@ class Login extends Component {
             <div className="imgRow viewDiv"><button key="submit" onClick={this.submitClicked}>submit</button></div>
             <div className={messageClass}>{message}</div>
         </form>
+        </div>
       </div>
     );
     }

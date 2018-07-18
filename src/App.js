@@ -15,8 +15,8 @@ class App extends Component {
       presets : [],
       currentPreset: -1,
       header: "",
-      showCredentials: false,
-      showAddress: false,
+      showAccount: false,
+      showSettings: false,
       showCalibrate: false,
       showUpdate: false,
       showHome: false,
@@ -75,8 +75,13 @@ class App extends Component {
   }
 
   onSuccess = (username, display_name, admin) => {
-    this.setState({username: username, validLogin: true, display_name: display_name, admin: admin});
+    this.setState({showHome: true, showAccount: false, username: username, validLogin: true, display_name: display_name, admin: admin});
   }
+
+  logoutClicked = () => {
+
+  }
+
   render() {
     let menuclass="sidenav";
     if(this.state.expanded) {
@@ -104,20 +109,20 @@ class App extends Component {
     });
 
     let credentialsMenu;
-    let addressMenu;
+    let settingsMenu;
     let calibrateMenu;
     let updateMenu;
     let homeMenu;
     let aboutMenu = "about hidden";
 
 
-    if(this.state.showCredentials) {
+    if(this.state.showAccount) { //change Login class to Account
       credentialsMenu = (<Login onSuccess={this.onSuccess}/>);
       homeMenu = "home hidden";
       aboutMenu = "about hidden";
     }
-    else if(this.state.showAddress) {
-      addressMenu = (<Address admin={this.state.admin}/>); //only admin
+    else if(this.state.showSettings) { //change Address class to Settings
+      settingsMenu = (<Address admin={this.state.admin}/>); //only admin
       homeMenu = "home hidden";
       aboutMenu = "about hidden";
     }
@@ -140,25 +145,40 @@ class App extends Component {
     }
 
     let welcomeMessage = "";
+    let logout = "logout hidden";
     if(this.state.validLogin) {
       welcomeMessage = "Hello, " + this.state.display_name;
+      logout = "logout";
+    }
+
+    let userOptions = "options hidden";
+    let adminOptions= "options hidden";
+    if(this.state.admin) {
+      adminOptions="options";
+      console.log("admin here");
+    }
+    if(this.state.validLogin) {
+      userOptions = "options";
     }
     return (
       <div>
         <div className="topBar">
           <div key="sideId" className={menuclass}>
             <div className="closebtn" onClick={() => this.closeNav()}> &times;</div>
-            <div className="options" onClick={()=> this.sideButtonClicked("login")}>Login</div>
-            <div className="options" onClick={()=> this.sideButtonClicked("address")}>Camera IP Address</div>
-            <div className="options" onClick={()=> this.sideButtonClicked("calibrate")}>Calibrate</div>
-            <div className="options" onClick={()=> this.sideButtonClicked("update")}>Update/Upload Image</div>
             <div className="options" onClick={()=> this.sideButtonClicked("home")}>Home</div>
+            <div className={adminOptions} onClick={()=> this.sideButtonClicked("settings")}>Settings</div>
+            <div className={adminOptions} onClick={()=> this.sideButtonClicked("calibrate")}>Calibrate</div>
+            <div className={adminOptions} onClick={()=> this.sideButtonClicked("update")}>Update/Upload Image</div>
             <div className="options" onClick={()=> this.sideButtonClicked("about")}>About</div>
+            <div className="options" onClick={()=> this.sideButtonClicked("account")}>Account</div>
 
           </div>
         </div>
-        <div className="title">PTZ Camera App &#9925;</div>
-        <div className="username">{welcomeMessage}</div>
+        <div className="title">PTZ Camera App</div>
+        <div className="username">
+          <div className="welcomeMessage">{welcomeMessage}</div>
+          <div className={logout} onClick={this.logoutClicked}>Logout</div>
+        </div>
         <span onClick={(e) => this.openNav(e)}>&#9776;</span>
         <center>
           <div className={homeMenu}>
@@ -167,7 +187,7 @@ class App extends Component {
         </center>
        <center> <div className={aboutMenu}>Copyright Gary Smith and Holly Donis 2018</div></center>
         {credentialsMenu}
-        {addressMenu}
+        {settingsMenu}
         {calibrateMenu}
         {updateMenu}
       </div>
@@ -181,21 +201,21 @@ class App extends Component {
   }
   sideButtonClicked(str) {
     this.closeNav();
-    if(str==="login") {
-      this.setState({showCredentials: true, showHome: false,
-        showAddress: false, showCalibrate: false, showUpdate: false});
+    if(str==="account") {
+      this.setState({showAccount: true, showHome: false,
+        showSettings: false, showCalibrate: false, showUpdate: false});
     }
-    else if(str==="address") {
-      this.setState({showAddress: true, showCredentials: false, showHome: false, showCalibrate: false, showUpdate: false});
+    else if(str==="settings") {
+      this.setState({showSettings: true, showAccount: false, showHome: false, showCalibrate: false, showUpdate: false});
     }
     else if(str==="calibrate") {
-      this.setState({showAddress: false, showCredentials: false, showHome: false, showCalibrate: true, showUpdate: false});
+      this.setState({showSettings: false, showAccount: false, showHome: false, showCalibrate: true, showUpdate: false});
     }
     else if(str==="update") {
-      this.setState({showAddress: false, showCredentials: false, showHome: false, showCalibrate: false, showUpdate: true});
+      this.setState({showSettings: false, showAccount: false, showHome: false, showCalibrate: false, showUpdate: true});
     }
     else if(str==="home" || str==="about") {
-      this.setState({showAddress: false, showCredentials: false, showHome: true, showCalibrate: false, showUpdate: false});
+      this.setState({showSettings: false, showAccount: false, showHome: true, showCalibrate: false, showUpdate: false});
       if(str==="about") {
         this.setState({showHome: false, showAbout: true});
       }
