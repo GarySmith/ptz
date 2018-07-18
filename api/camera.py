@@ -92,3 +92,13 @@ def myreceive(s, maxlen):
             remaining = maxlen - len(msg)
 
     return msg
+
+def test_connection(ip_address, port):
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((ip_address, port))
+        s.shutdown(socket.SHUT_RDWR)
+        return True
+    except socket.error as e:
+        pass

@@ -21,8 +21,7 @@ def get_all_presets():
     Note:
         The camera supports a maximum of 255 presets
     """
-    settings = get_settings()
-    return jsonify(settings.get('presets', []))
+    return jsonify(get_settings('presets') or [])
 
 
 @app.route("/api/presets/<preset>", methods=['POST'])
@@ -64,7 +63,7 @@ def get_current_preset():
     position = camera.get_position(camera_settings['ip_address'],
                                    camera_settings['ptz_port'])
 
-    presets = get_settings().get('presets', [])
+    presets = get_settings('presets') or []
 
     for preset in presets:
         if position['zoom'] == preset['zoom'] and \
@@ -93,8 +92,6 @@ def calibrate():
 
     max_presets = info.get('max_presets', int(3))
 
-    settings = get_settings()
-
     presets = []
     # Create a new, ordered, empty sets of presets
     for num in range(1, max_presets+1):
@@ -110,8 +107,7 @@ def calibrate():
         position = camera.get_position(ip, port)
         preset.update(position)
 
-    settings['presets'] = presets
-    save_settings(settings)
+    save_settings(presets, 'presets')
 
     return jsonify("Success")
 
@@ -130,7 +126,7 @@ def login():
     username = info.get('username')
     password = info.get('password')
 
-    accounts = get_settings().get('accounts', [])
+    accounts = get_settings('accounts') or []
     for account in accounts:
         if account['username'] == username and account['password'] == password:
             return jsonify({
@@ -141,7 +137,7 @@ def login():
         abort(401, 'Invalid credentidals')
 
 
-def get_settings():
+def get_settings(section=None):
     settings = {}
 
     try:
@@ -151,13 +147,22 @@ def get_settings():
     except IOError:
         pass
 
+    if (section):
+        return settings.get(section)
+
     return settings
 
-def save_settings(settings):
+def save_settings(settings, section=None):
+
+    if (section):
+        new_settings = get_settings()
+        new_settings[section] = settings
+    else:
+        new_settings = settings
 
     try:
         with open("settings.json",  'w') as f:
-            json.dump(settings, f)
+            json.dump(new_settings, f)
     except:
         pass
 
@@ -175,21 +180,20 @@ def update_camera_settings():
     info = request.get_json()
 
     camera_settings = get_camera_settings()
+    camera_settings['ip_address'] = info['ip_address']
+    camera_settings['ptz_port'] = int(info['ptz_port'])
 
-    if 'ip_address' in info:
-        camera_settings['ip_address'] = info['ip_address']
+    if not camera.test_connection(camera_settings['ip_address'],
+                                  camera_settings['ptz_port']):
+        abort(401, 'Invalid host, port combination')
 
-    if 'ptz_port' in info:
-        camera_settings['ptz_port'] = int(info['ptz_port'])
-
-    settings['camera'] = camera_settings
-    save_settings(settings)
+    save_settings(camera_settings, 'camera')
     return jsonify("Success")
 
 
 def get_camera_settings():
 
-    camera_settings = get_settings().get('camera', {})
+    camera_settings = get_settings('camera') or {}
     if 'ip_address' not in camera_settings:
         camera_settings['ip_address'] = DEFAULT_IP_ADDRESS
 
