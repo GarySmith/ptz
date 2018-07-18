@@ -10,10 +10,11 @@ class Login extends Component {
       attempts: 0,
     };
   }
-  submitClicked = () => {
+  submitClicked = (evt) => {
+    evt.preventDefault();
     let attemptedUsername = this.state.triedUser;
     let attemptedPassword = this.state.triedPass;
-
+    console.log('submit clicked');
     const post = {
       method: 'POST',
       headers: {
@@ -28,6 +29,7 @@ class Login extends Component {
         this.setState({success: true});
         this.setState({attempts: 1});
         this.props.onSuccess(attemptedUsername, response.display_name, response.admin);
+        console.log("success: " + attemptedUsername +" " + response.display_name +" "+ response.admin);
       })
     .catch((error)=> {
       console.log(error);

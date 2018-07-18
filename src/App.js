@@ -147,13 +147,13 @@ class App extends Component {
       <div>
         <div className="topBar">
           <div key="sideId" className={menuclass}>
-            <a href="javascript:void(0)" className="closebtn" onClick={() => this.closeNav()}> &times;</a>
-            <a href="#" onClick={()=> this.sideButtonClicked("login")}>Login</a>
-            <a href="#" onClick={()=> this.sideButtonClicked("address")}>Camera IP Address</a>
-            <a href="#" onClick={()=> this.sideButtonClicked("calibrate")}>Calibrate</a>
-            <a href="#" onClick={()=> this.sideButtonClicked("update")}>Update/Upload Image</a>
-            <a href="#" onClick={()=> this.sideButtonClicked("home")}>Home</a>
-            <a href="#" onClick={()=> this.sideButtonClicked("about")}>About</a>
+            <div className="closebtn" onClick={() => this.closeNav()}> &times;</div>
+            <div className="options" onClick={()=> this.sideButtonClicked("login")}>Login</div>
+            <div className="options" onClick={()=> this.sideButtonClicked("address")}>Camera IP Address</div>
+            <div className="options" onClick={()=> this.sideButtonClicked("calibrate")}>Calibrate</div>
+            <div className="options" onClick={()=> this.sideButtonClicked("update")}>Update/Upload Image</div>
+            <div className="options" onClick={()=> this.sideButtonClicked("home")}>Home</div>
+            <div className="options" onClick={()=> this.sideButtonClicked("about")}>About</div>
 
           </div>
         </div>
@@ -181,7 +181,7 @@ class App extends Component {
   }
   sideButtonClicked(str) {
     this.closeNav();
-    if(str=="login") {
+    if(str==="login") {
       this.setState({showCredentials: true, showHome: false,
         showAddress: false, showCalibrate: false, showUpdate: false});
     }
