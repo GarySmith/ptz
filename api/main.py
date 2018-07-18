@@ -1,7 +1,9 @@
 from flask import Flask, jsonify, send_from_directory, request, abort
+from jose import jwt
 from time import sleep
 import json
 import os
+import time
 app = Flask(__name__)
 
 from api import camera
@@ -91,7 +93,9 @@ def calibrate():
     if request.content_length:
         info = request.get_json()
 
-    max_presets = info.get('max_presets', int(3))
+    max_presets = int(info.get('max_presets', 3))
+    if max_presets < 1 or max_presets > 255:
+        abort(406, "Invalid number or presets")
 
     presets = []
     # Create a new, ordered, empty sets of presets
@@ -129,13 +133,17 @@ def login():
 
     accounts = settings.get_settings('accounts') or []
     for account in accounts:
-        if account['username'] == username and account['password'] == password:
-            return jsonify({
-                'display_name': account['display_name'],
-                'admin': account['admin']
-            })
-    else:
-        abort(401, 'Invalid credentidals')
+        if account['username'] == username:
+            if account['password'] == password:
+                token = get_token(username)
+                return jsonify({
+                    'display_name': account['display_name'],
+                    'admin': account['admin'],
+                    'token': token,
+                })
+            break
+
+    abort(401, 'Invalid credentidals')
 
 
 @app.route("/api/camera", methods=['GET'])
@@ -172,6 +180,58 @@ def get_position():
 
     return jsonify(position)
 
+
+SECRET = None
+def get_secret():
+    global SECRET
+    if not SECRET:
+        try:
+            print("loading secret.txt")
+            with open('secret.txt') as f:
+                SECRET = f.readline()
+
+        except IOError:
+
+            import uuid
+            SECRET = uuid.uuid4().hex
+            try:
+                print("Creating new secret.txt")
+                with open('secret.txt','w') as f:
+                    f.write(SECRET)
+
+            except IOError:
+                print('Unable to save secret file. All sessions will ' +
+                        'become invalid when the service restarts')
+                pass
+    return SECRET
+
+
+AUDIENCE = 'ptzapp'
+
+@app.route("/api/token", methods=['POST'])
+def validate_token():
+    payload = request.get_json()
+    if not is_token_valid(payload['token']):
+        abort(401)
+
+    return jsonify("Success")
+
+
+def is_token_valid(token):
+    try:
+        jwt.decode(token, get_secret(), audience=AUDIENCE)
+        return True
+    except Exception as e:
+        print("Token invalid: ", e)
+
+
+def get_token(user):
+    payload = {
+        'user': user,
+        'aud': AUDIENCE,
+        # 'exp': int(time.time()) + 30,  # for testing expirate times
+    }
+    return jwt.encode(payload, get_secret(), algorithm='HS256')
 
 # TODO(gary) Need apis for:
 #   Uploading an image for a given preset
