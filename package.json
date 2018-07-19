@@ -9,7 +9,8 @@
     "react-dom": "^16.4.1",
     "react-scripts": "1.1.4",
     "react-bootstrap": "0.32.1",
-    "universal-cookie": "2.2.0"
+    "universal-cookie": "2.2.0",
+    "jsonwebtoken": "8.3.0"
   },
   "scripts": {
     "build-css": "node-sass-chokidar src/ -o src/",
@@ -22,8 +23,8 @@
     "eject": "react-scripts eject"
   },
   "proxy": {
-    "/api": { 
-      "target": "http://localhost:5100"
+    "/api": {
+      "target": "http://192.168.1.49:5100"
     }
   }
 }

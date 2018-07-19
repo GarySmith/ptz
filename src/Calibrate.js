@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import { Button } from 'react-bootstrap';
+import { doFetch } from './RestUtils.js';
 
 class Calibrate extends Component {
   constructor(props) {  //num_presets
@@ -17,22 +19,12 @@ class Calibrate extends Component {
      this.setState({disableButton: false});
     }
   }
-  calibrate() {
+  calibrate = () => {
     this.setState({waiting: true});
     let presets = Number(this.state.numPresets);
     let fullMessage = 'Preset number changed to ' + presets;
-    const init = {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json',
-      },
-      credentials: "same-origin",
-      body: JSON.stringify({max_presets: presets})
-    };
 
-    fetch('/api/calibrate', init)
-    .then(response => response.json())
+    doFetch('/api/calibrate', 'POST', JSON.stringify({max_presets: presets}))
     .then(response => {
       this.setState({presets: response, message: fullMessage, waiting: false}); //waiting: false
       this.props.onComplete();
@@ -61,7 +53,10 @@ class Calibrate extends Component {
         <center>
         <div className="calMessage">Max number of presets: </div>
         <input type="number" min="1" max="255" value={this.state.numPresets} className="dial" onChange={this.updateDial.bind(this)}></input>
-        <div><button onClick={()=>this.calibrate()} disabled={this.state.disableButton}>submit</button></div>
+        <div><button disabled={this.state.waiting}
+          onClick={!this.state.waiting ? this.calibrate : null}>
+         {this.state.waiting ? 'Loading...' : 'submit'}
+        </button></div>
         <div className={loaderClass}></div>
         <div className="calMessage">{this.state.message}</div>
         </center>

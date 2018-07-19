@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { doFetch } from './RestUtils.js';
 
 class Address extends Component {
   constructor(props) {
@@ -11,17 +12,7 @@ class Address extends Component {
       };
   } //this.props.admin
   componentDidMount = () => {
-    const init = {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json',
-      },
-      credentials: "same-origin",
-    };
-
-    fetch('/api/camera', init)
-    .then(response => response.json())
+    doFetch('/api/camera', 'GET')
     .then(response => {
       this.setState({addressInput: response.ip_address, portInput: response.ptz_port});
     })
@@ -34,7 +25,6 @@ class Address extends Component {
       const IPV4ADDRESS = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
       const val = evt.target.value;
       this.setState({addressInput: val});
-      console.log("changed add: "+ val);
       if(IPV4ADDRESS.exec(val)===null) {
       this.setState({disableAdd:true}); //IP address is invalid, so disable button
       }
@@ -45,7 +35,6 @@ class Address extends Component {
   updatePortInput(evt) {
       const val = evt.target.value;
       this.setState({portInput: val});
-      console.log("changed port: "+ val);
       if(0 < val && val < 65536 && this.props.admin) {  //if port number is between 1 and 65536, set disable button to false (enable button)
       this.setState({disablePort: false});
       }
@@ -55,10 +44,8 @@ class Address extends Component {
   }
   submit() {
     let address = this.state.addressInput;
-    console.log("address = " + address);
 
     let port = this.state.portInput;
-    console.log("port= "+ port);
 
       const post = {
         method: 'POST',
@@ -69,8 +56,7 @@ class Address extends Component {
         credentials: "same-origin",
         body: JSON.stringify({ip_address: address, ptz_port: port})
       };
-      fetch('/api/camera', post)
-    .then(response => response.json())
+      doFetch('/api/camera', 'POST', JSON.stringify({ip_address: address, ptz_port: port}))
     .then(response => {
         console.log("sent ip and port to api");
     })

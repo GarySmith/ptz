@@ -40,6 +40,38 @@ span {
     color: red;
   }
 }
+.dropDown {
+  width: 120px;
+  position: absolute;
+  left: 93%;
+  top: 35px;
+  color: black;
+  text-align: center;
+  font-size: 15px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+  &.hidden {
+     box-shadow: 0px 8px 16px 0px white;
+     color: white;
+     width: 120px;
+     height: 100px;
+  }
+}
+
+.dropOption {
+  padding: 5px;
+  &:hover {
+    background-color: lightgray;
+    cursor: pointer;
+  }
+  &.hidden {
+    display: none;
+  }
+  &.disable {
+    cursor: not-allowed;
+  }
+}
+
 .loader {
   border: 5px solid #f3f3f3;
   border-radius: 50%;
@@ -138,7 +170,7 @@ button {
   background-color: #4CAF50;
   border: none;
   color: white;
-  padding: 15px 32px;
+  padding: 10px 20px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
@@ -189,10 +221,11 @@ button {
   margin-right: 2%;
   font-size: 20px;
 }
+
 .logout {
-    position: relative;
-    top: -23px;
+    position: absolute;
     left: 95%;
+    top: -5px;
     color: lightgray;
     width: 5%;
 
@@ -200,8 +233,10 @@ button {
     color: white;
     cursor: pointer;
   }
-  &.hidden {
-    display: none;
+  &:after {
+    content: '\2807';
+    color: black;
+    position: absolute;
   }
 }
 .welcomeMessage {

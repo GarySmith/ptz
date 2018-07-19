@@ -6,8 +6,8 @@ import Login from './Login.js';
 import Address from './Address.js';
 import Calibrate from './Calibrate.js';
 import Update from './Update.js';
-
-
+import jwt from 'jsonwebtoken';
+import { doFetch } from './RestUtils.js'
 class App extends Component {
   constructor(props) {
     super(props);
@@ -22,58 +22,43 @@ class App extends Component {
       validLogin: false,
       admin: false,
       display_name: '',
+      dropDown: false,
     };
   }
 
   componentDidMount = () => {
-   console.log("components mounted");
     this.loadPresets();
+    this.checkLogin();
   }
 
   presetClicked = (num) => {
-    console.log(num);
     if(!this.state.validLogin) {
       return;
     }
     this.setState({currentPreset: num, pending: true});
-    const post = {
-     method: 'POST',
-     headers: {
-       'Accept': 'application/json, text/plain, */*',
-       'Content-Type': 'application/json',
-     },
-      credentials: "same-origin",
-     body: JSON.stringify({current_preset: num})
-   };
 
-   fetch('/api/current_preset', post)
-   .then(response => response.json())
+   doFetch('/api/current_preset', "POST", JSON.stringify({current_preset: num}))
    .then(response => {
-     console.log("updated!");
     this.setState({pending: false});
     })
   }
 
-  loadPresets = () => {
-    console.log("presets loaded");
-    const init = {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json',
-      },
-      credentials: "same-origin",
-    };
+  checkLogin = () => {
+    const cookies = new Cookies();
+    let token = cookies.get('token');
+    let decode = jwt.decode(token);
+    if(token!=undefined) {
+      this.onSuccess(decode.user, decode.name, decode.admin);
+    }
+  }
 
-    fetch('/api/presets', init)
-    .then(response => response.json())
+  loadPresets = () => {
+    doFetch('/api/presets', 'GET')
     .then(response => {
       this.setState({presets: response});
-      return fetch('/api/current_preset', init)
+      return doFetch('/api/current_preset', 'GET')
     })
-    .then(response => response.json())
     .then(response => {
-      console.log('current '+response.current_preset);
       this.setState({currentPreset: response.current_preset});
     })
     this.setState({currentView: 'home'});
@@ -82,12 +67,13 @@ class App extends Component {
 
   onSuccess = (username, display_name, admin) => {
     this.setState({currentView: 'home', username: username, validLogin: true, display_name: display_name, admin: admin});
+    console.log("success here");
   }
 
   logoutClicked = () => {
     const cookies = new Cookies();
     cookies.remove('token', { path: '/' });
-    this.setState({walidLogin: false, username: '', admin: false, display_name: '', currentView: 'home'});
+    this.setState({validLogin: false, username: '', admin: false, display_name: '', currentView: 'home', dropDown: false});
   }
 
 
@@ -125,14 +111,23 @@ class App extends Component {
     let homeMenu= "home hidden";
     let aboutMenu = "about hidden";
     let presets_len = this.state.presets.length;
+    let dropClass = "dropDown hidden";
+    let dropOption = "dropOption hidden";
 
+    if(this.state.dropDown) {
+      dropClass = "dropDown";
+      dropOption = "dropOption";
+      if(!this.state.validLogin) {
+        dropOption= "dropOption disable";
+      }
+    }
     if(this.state.currentView==='home') {
       homeMenu= "home";
     }
     else if(this.state.currentView==="about") {
       aboutMenu="about";
     }
-    if(this.state.currentView==='account') { //change Login class to Account
+    if(this.state.currentView==='login') {
       credentialsMenu = (<Login onSuccess={this.onSuccess}/>);
     }
     else if(this.state.currentView==="settings") { //change Address class to Settings
@@ -146,19 +141,19 @@ class App extends Component {
     }
 
     let welcomeMessage = "";
-    let logout = "logout hidden";
     if(this.state.validLogin) {
       welcomeMessage = "Hello, " + this.state.display_name;
-      logout = "logout";
     }
 
     let userOptions = "options hidden";
     let adminOptions= "options hidden";
+    let loginView = "options";
     if(this.state.admin) {
       adminOptions="options";
     }
     if(this.state.validLogin) {
       userOptions = "options";
+      loginView = "options hidden";
     }
     return (
       <div>
@@ -170,14 +165,19 @@ class App extends Component {
             <div className={adminOptions} onClick={()=> this.sideButtonClicked("calibrate")}>Calibrate</div>
             <div className={adminOptions} onClick={()=> this.sideButtonClicked("update")}>Update/Upload Image</div>
             <div className="options" onClick={()=> this.sideButtonClicked("about")}>About</div>
-            <div className="options" onClick={()=> this.sideButtonClicked("account")}>Account</div>
+            <div className={loginView} onClick={()=> this.sideButtonClicked("login")}>Login</div>
 
           </div>
         </div>
-        <div className="title">PTZ Camera App</div>
+        <div className="title">PTZ Cam App</div>
         <div className="username">
           <div className="welcomeMessage">{welcomeMessage}</div>
-          <div className={logout} onClick={this.logoutClicked}>Logout</div>
+          <div className="logout" onClick={this.iconClicked}></div>
+          <div className={dropClass}>
+            <div className={dropOption} onClick={this.manageAccount}>Manage Account</div>
+            <div className={dropOption} onClick={this.addUsers}>Add Users</div>
+            <div className={dropOption} onClick={this.logoutClicked}>Logout</div>
+          </div>
         </div>
         <span onClick={(e) => this.openNav(e)}>&#9776;</span>
         <center>
@@ -196,7 +196,16 @@ class App extends Component {
 
 //  end render function----------------------------------------
 
-closeNav() {//false
+iconClicked = () => {
+  if(this.state.dropDown) {
+    this.setState({dropDown: false});
+  }
+  else {
+    this.setState({dropDown: true});
+  }
+}
+
+  closeNav() {
     this.setState({expanded: false});
   }
   openNav() {
@@ -206,6 +215,16 @@ closeNav() {//false
     this.closeNav();
     this.setState({currentView:str});
   }
-}
 
+  manageAccount= () => {
+    if(!this.state.validLogin) {
+      return;
+    }
+  }
+  addUsers = () => {
+    if(!this.state.admin) {
+     return;
+    }
+  }
+}
 export default App;
