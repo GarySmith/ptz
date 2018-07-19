@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Cookies from 'universal-cookie';
 //import logo from './logo.svg';
 import './App.css';
 import Login from './Login.js';
@@ -84,7 +85,9 @@ class App extends Component {
   }
 
   logoutClicked = () => {
-    this.setState({validLogin: false, username: '', admin: false, display_name: '', currentView: 'home'});
+    const cookies = new Cookies();
+    cookies.remove('token', { path: '/' });
+    this.setState({walidLogin: false, username: '', admin: false, display_name: '', currentView: 'home'});
   }
 
 
