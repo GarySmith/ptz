@@ -78,7 +78,7 @@ def get_token_payload(token):
         print("Token invalid: ", e)
 
 
-def get_token(user, display_name='', admin=False):
+def create_token(user, display_name='', admin=False):
     payload = {
         'user': user,
         'name': display_name,

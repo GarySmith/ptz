@@ -6,7 +6,7 @@ from tinydb import TinyDB, Query
 
 app = Flask(__name__)
 
-from api.auth import needs_admin, needs_user, get_token, get_token_payload
+from api.auth import needs_admin, needs_user, create_token, get_token_payload
 from api import camera
 
 DB = TinyDB('settings.json')
@@ -160,7 +160,7 @@ def login():
         if acct['password'] == password:
             is_admin = acct['admin']
             display_name = acct['display_name']
-            token = get_token(username, display_name, is_admin)
+            token = create_token(username, display_name, is_admin)
             response = jsonify({
                 'display_name': display_name,
                 'admin': is_admin,
@@ -170,6 +170,38 @@ def login():
             return response
 
     abort(401, 'Invalid credentials')
+
+
+@app.route("/api/users/<user>/password", methods=['POST'])
+@needs_admin()
+def change_password(user):
+    info = request.get_json()
+    password = info.get('password')
+    return update_password(user, password)
+
+
+@app.route("/api/password", methods=['POST'])
+@needs_user()
+def change_my_password():
+
+    info = request.get_json()
+    password = info.get('password')
+
+    # Get username from the token
+    token = request.cookies.get('token')
+    payload = get_token_payload(token)
+    return update_password(payload['user'], password)
+
+
+def update_password(user, new_pass):
+
+    accounts = DB.table('accounts')
+    User = Query()
+    if not accounts.search(User.username == user):
+        abort(401, 'Invalid user')
+
+    accounts.update({'password': new_pass}, User.username == user)
+    return jsonify('Success')
 
 
 @app.route("/api/camera", methods=['GET'])
@@ -197,17 +229,6 @@ def update_camera_settings():
         'ip_address': ip_address,
         'ptz_port': ptz_port})
     return jsonify("Success")
-
-# This function is just for testing
-
-@app.route("/api/token", methods=['POST'])
-def validate_token():
-    payload = request.get_json()
-    if not get_token_payload(payload['token']):
-        abort(401)
-
-    return jsonify("Success")
-
 
 
 # TODO(gary) Need apis for:
