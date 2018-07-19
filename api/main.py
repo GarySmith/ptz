@@ -135,12 +135,16 @@ def login():
     for account in accounts:
         if account['username'] == username:
             if account['password'] == password:
-                token = get_token(username)
-                return jsonify({
+                is_admin = account['admin']
+                token = get_token(username, is_admin)
+                response = jsonify({
                     'display_name': account['display_name'],
-                    'admin': account['admin'],
+                    'admin': is_admin,
                     'token': token,
                 })
+                response.set_cookie('token', value=token)
+                return response
+
             break
 
     abort(401, 'Invalid credentidals')
@@ -225,13 +229,15 @@ def is_token_valid(token):
         print("Token invalid: ", e)
 
 
-def get_token(user):
+def get_token(user, admin=False):
     payload = {
         'user': user,
+        'admin': admin,
         'aud': AUDIENCE,
         # 'exp': int(time.time()) + 30,  # for testing expirate times
     }
     return jwt.encode(payload, get_secret(), algorithm='HS256')
+
 
 # TODO(gary) Need apis for:
 #   Uploading an image for a given preset
