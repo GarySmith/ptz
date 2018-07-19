@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, send_from_directory, request, abort
 from functools import wraps
-# from time import sleep
 import os
 import time
 app = Flask(__name__)
@@ -12,6 +11,18 @@ from api import settings
 # Default setting used by the PTZ camera
 DEFAULT_IP_ADDRESS = "192.168.100.88"
 DEFAULT_PTZ_PORT = 5678
+
+# Create an error handler that returns json
+@app.errorhandler(401)
+@app.errorhandler(403)
+@app.errorhandler(404)
+@app.errorhandler(406)
+@app.errorhandler(500)
+def json_errors(error):
+    response = jsonify({'code': error.code, 'description': error.description})
+    response.status_code = error.code
+    return response
+
 
 @app.route("/api/presets")
 def get_all_presets():
@@ -91,7 +102,6 @@ def calibrate():
     Manipulates the camera to move to each preset and capture the
     coordinates of that position, storing them away for future reference
     """
-    # sleep(1)  # Emulate some elapsed time
     info = {}
     if request.content_length:
         info = request.get_json()
