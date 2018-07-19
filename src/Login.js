@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { doFetch } from './RestUtils.js'
 
 
 class Login extends Component {
@@ -16,17 +17,8 @@ class Login extends Component {
     let attemptedUsername = this.state.triedUser;
     let attemptedPassword = this.state.triedPass;
     console.log('submit clicked');
-    const post = {
-      method: 'POST',
-      headers: {
-      'Accept': 'application/json, text/plain, */*',
-      'Content-Type': 'application/json',
-      },
-      credentials: "same-origin",
-      body: JSON.stringify({username: attemptedUsername, password: attemptedPassword})
-    };
-    fetch('/api/login', post)
-    .then(response => response.json())
+    const body = JSON.stringify({username: attemptedUsername, password: attemptedPassword});
+    doFetch('/api/login', 'POST', body)
     .then(response => {
         this.setState({success: true, attempts: 1});
         this.props.onSuccess(attemptedUsername, response.display_name, response.admin);
