@@ -2,11 +2,14 @@ from flask import Flask, jsonify, send_from_directory, request, abort
 from functools import wraps
 import os
 import time
+from tinydb import TinyDB, Query
+
 app = Flask(__name__)
 
 from api.auth import needs_admin, needs_user, get_token, get_token_payload
 from api import camera
-from api import settings
+
+DB = TinyDB('settings.json')
 
 # Default setting used by the PTZ camera
 DEFAULT_IP_ADDRESS = "192.168.100.88"
@@ -17,6 +20,7 @@ DEFAULT_PTZ_PORT = 5678
 @app.errorhandler(403)
 @app.errorhandler(404)
 @app.errorhandler(406)
+@app.errorhandler(422)
 @app.errorhandler(500)
 def json_errors(error):
     response = jsonify({'code': error.code, 'description': error.description})
@@ -35,16 +39,18 @@ def get_all_presets():
     Note:
         The camera supports a maximum of 255 presets
     """
-    return jsonify(settings.get_settings('presets') or [])
+    return jsonify(DB.table('presets').all())
 
 
-@app.route("/api/presets/<preset>", methods=['POST'])
-@needs_admin()
-def update_preset_image(preset):
+def get_camera_settings():
 
-    # Get the payload from the image.  This might be better handled by
-    #    nginx/apache
-    return jsonify("Success")
+    camera = DB.table('camera')
+    settings = camera.all()
+    if (len(settings) < 1):
+        camera.insert({'ip_address': DEFAULT_IP_ADDRESS,
+                       'ptz_port': DEFAULT_PTZ_PORT})
+
+    return settings[0]
 
 
 @app.route("/api/current_preset", methods=['POST'])
@@ -58,7 +64,7 @@ def change_current_preset():
     if preset < 0 or preset > 255:
         abort(406, "Invalid preset")
 
-    camera_settings = settings.get_camera_settings()
+    camera_settings = get_camera_settings()
 
     camera.recall_preset(camera_settings['ip_address'],
                          camera_settings['ptz_port'],
@@ -74,25 +80,25 @@ def get_current_preset():
     corresponding preset.  Returns -1 if the current coordinates do not
     correspond to any preset
     """
-    camera_settings = settings.get_camera_settings()
+    camera_settings = get_camera_settings()
 
     position = camera.get_position(camera_settings['ip_address'],
                                    camera_settings['ptz_port'])
 
-    presets = settings.get_settings('presets') or []
+    presets = DB.table('accounts')
+    Preset = Query()
+    match = presets.search((Preset.zoom == position['zoom']) &
+                           (Preset.focus == position['focus']) &
+                           (Preset.pan == position['pan']) &
+                           (Preset.tilt == position['tilt']))
 
-    for preset in presets:
-        if position['zoom'] == preset['zoom'] and \
-           position['focus'] == preset['focus'] and \
-           position['pan'] == preset['pan'] and \
-           position['tilt'] == preset['tilt']:
-            return jsonify({'current_preset': preset['num']})
-    else:
-        return jsonify({'current_preset': -1})
-
+    if (len(match) > 0):
+        return jsonify({'current_preset': match[0]['num']})
 
     # TODO(gary): Add extra logic to permit the value to be close to, but
     # not exactly that corresponding to a preset
+
+    return jsonify({'current_preset': -1})
 
 
 @app.route("/api/calibrate", methods=['POST'])
@@ -116,7 +122,7 @@ def calibrate():
         presets.append({'num': num,
                         'image_url': '/images/{0}.jpg'.format(num) })
 
-    camera_settings = settings.get_camera_settings()
+    camera_settings = get_camera_settings()
     ip = camera_settings['ip_address']
     port = camera_settings['ptz_port']
 
@@ -125,7 +131,9 @@ def calibrate():
         position = camera.get_position(ip, port)
         preset.update(position)
 
-    settings.save_settings(presets, 'presets')
+    preset_tbl = DB.table('presets')
+    preset_tbl.purge()
+    preset_tbl.insert_multiple(presets)
 
     return jsonify("Success")
 
@@ -144,30 +152,30 @@ def login():
     username = info.get('username')
     password = info.get('password')
 
-    accounts = settings.get_settings('accounts') or []
-    for account in accounts:
-        if account['username'] == username:
-            if account['password'] == password:
-                is_admin = account['admin']
-                display_name = account['display_name']
-                token = get_token(username, display_name, is_admin)
-                response = jsonify({
-                    'display_name': display_name,
-                    'admin': is_admin,
-                    'token': token,
-                })
-                response.set_cookie('token', value=token)
-                return response
+    accounts = DB.table('accounts')
+    User = Query()
+    accts = accounts.search(User.username == username)
+    if len(accts) == 1:
+        acct = accts[0]
+        if acct['password'] == password:
+            is_admin = acct['admin']
+            display_name = acct['display_name']
+            token = get_token(username, display_name, is_admin)
+            response = jsonify({
+                'display_name': display_name,
+                'admin': is_admin,
+                'token': token,
+            })
+            response.set_cookie('token', value=token)
+            return response
 
-            break
-
-    abort(401, 'Invalid credentidals')
+    abort(401, 'Invalid credentials')
 
 
 @app.route("/api/camera", methods=['GET'])
 @needs_admin()
 def get_camera():
-    return jsonify(settings.get_camera_settings())
+    return jsonify(get_camera_settings())
 
 
 @app.route("/api/camera", methods=['POST'])
@@ -176,15 +184,18 @@ def update_camera_settings():
 
     info = request.get_json()
 
-    camera_settings = settings.get_camera_settings()
-    camera_settings['ip_address'] = info['ip_address']
-    camera_settings['ptz_port'] = int(info['ptz_port'])
+    # camera_settings = get_camera_settings()
+    ip_address = info['ip_address']
+    ptz_port = int(info['ptz_port'])
 
-    if not camera.test_connection(camera_settings['ip_address'],
-                                  camera_settings['ptz_port']):
-        abort(401, 'Invalid host, port combination')
+    if not camera.test_connection(ip_address, ptz_port):
+        abort(422, 'Invalid host, port combination')
 
-    settings.save_settings(camera_settings, 'camera')
+    get_camera_settings()
+    camera_settings = DB.table('camera')
+    camera_settings.update({
+        'ip_address': ip_address,
+        'ptz_port': ptz_port})
     return jsonify("Success")
 
 # This function is just for testing
