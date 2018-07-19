@@ -149,9 +149,10 @@ def login():
         if account['username'] == username:
             if account['password'] == password:
                 is_admin = account['admin']
-                token = get_token(username, is_admin)
+                display_name = account['display_name']
+                token = get_token(username, display_name, is_admin)
                 response = jsonify({
-                    'display_name': account['display_name'],
+                    'display_name': display_name,
                     'admin': is_admin,
                     'token': token,
                 })

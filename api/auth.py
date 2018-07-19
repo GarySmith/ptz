@@ -78,19 +78,12 @@ def get_token_payload(token):
         print("Token invalid: ", e)
 
 
-def get_token(user, admin=False):
+def get_token(user, display_name='', admin=False):
     payload = {
         'user': user,
+        'name': display_name,
         'admin': admin,
         'aud': AUDIENCE,
         # 'exp': int(time.time()) + 30,  # for testing expirate times
     }
     return jwt.encode(payload, get_secret(), algorithm='HS256')
-
-
-
-
-# TODO(gary) Need apis for:
-#   Uploading an image for a given preset
-#   Power on/off camera
-#   Other settings (eventually)
