@@ -85,7 +85,7 @@ def get_current_preset():
     position = camera.get_position(camera_settings['ip_address'],
                                    camera_settings['ptz_port'])
 
-    presets = DB.table('accounts')
+    presets = DB.table('presets')
     Preset = Query()
     match = presets.search((Preset.zoom == position['zoom']) &
                            (Preset.focus == position['focus']) &
