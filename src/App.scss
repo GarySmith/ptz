@@ -40,6 +40,32 @@ span {
     color: red;
   }
 }
+.loader {
+  border: 5px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 5px solid #3498db;
+  width:20px;
+  height: 20px;
+  -webkit-animation: spin 1s linear infinite; /* Safari */
+  animation: spin 2s linear infinite;
+  position: relative;
+  left: 100px;
+  top: -40px;
+  &.hidden {
+    display: none;
+  }
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 @keyframes blink {
   50% { border-color: blue; }
 }
@@ -47,7 +73,9 @@ span {
   border: 3px solid white;
   border-radius: 4px;
   padding: 5px;
-
+  &:hover {
+    cursor: pointer;
+  }
   &.selectedImg {
     border: 3px solid blue;
   }
@@ -62,6 +90,7 @@ span {
   top: 40px;
   color: white;
   text-shadow: 0 0 10px black;
+  width: 5%;
 }
 
 .home {
@@ -100,7 +129,33 @@ span {
       cursor: pointer;
   }
 }
-
+.calMessage {
+  margin-top: 80px;
+}
+button {
+  margin-left: auto;
+  margin-top: 50px;
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  &:hover {
+    background-color: darkgreen;
+  }
+  &:disabled {
+    background-color: darkgray;
+    cursor: not-allowed;
+  }
+}
+.dial {
+  margin: 20px;
+}
 .options {
   padding: 8px 8px 8px 32px;
   text-decoration: none;
@@ -251,7 +306,31 @@ slider::-moz-range-thumb {
     /*font-size: 15px;*/
   }
   .username {
+    /*left: -5px;*/
+    top: -70px;
+    position: relative;
+    text-align: right;
+    color: white;
+    margin-right: 2%;
     font-size: 10px;
-    top: -85px;
+  }
+  .logout {
+      position: relative;
+      top: 0px;
+      left: 90%;
+      color: lightgray;
+      width: 5%;
+
+    &:hover {
+      color: white;
+      cursor: pointer;
+    }
+    &.hidden {
+      display: none;
+    }
+  }
+  .welcomeMessage {
+    top: -10px;
+    left: 0px;
   }
 }

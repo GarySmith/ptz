@@ -15,12 +15,7 @@ class App extends Component {
       presets : [],
       currentPreset: -1,
       header: "",
-      showAccount: false,
-      showSettings: false,
-      showCalibrate: false,
-      showUpdate: false,
-      showHome: false,
-      showAbout: false,
+      currentView: 'home',
       pending: false,
       username: '',
       validLogin: false,
@@ -30,25 +25,8 @@ class App extends Component {
   }
 
   componentDidMount = () => {
-    const init = {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json',
-      }
-    };
-
-    fetch('/api/presets', init)
-    .then(response => response.json())
-    .then(response => {
-      this.setState({presets: response});
-      return fetch('/api/current_preset', init)
-    })
-    .then(response => response.json())
-    .then(response => {
-      console.log('current '+response.current_preset);
-      this.setState({currentPreset: response.current_preset});
-    })
+   console.log("components mounted");
+    this.loadPresets();
   }
 
   presetClicked = (num) => {
@@ -63,6 +41,7 @@ class App extends Component {
        'Accept': 'application/json, text/plain, */*',
        'Content-Type': 'application/json',
      },
+      credentials: "same-origin",
      body: JSON.stringify({current_preset: num})
    };
 
@@ -74,14 +53,42 @@ class App extends Component {
     })
   }
 
+  loadPresets = () => {
+    console.log("presets loaded");
+    const init = {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json',
+      },
+      credentials: "same-origin",
+    };
+
+    fetch('/api/presets', init)
+    .then(response => response.json())
+    .then(response => {
+      this.setState({presets: response});
+      return fetch('/api/current_preset', init)
+    })
+    .then(response => response.json())
+    .then(response => {
+      console.log('current '+response.current_preset);
+      this.setState({currentPreset: response.current_preset});
+    })
+    this.setState({currentView: 'home'});
+  }
+
+
   onSuccess = (username, display_name, admin) => {
-    this.setState({showHome: true, showAccount: false, username: username, validLogin: true, display_name: display_name, admin: admin});
+    this.setState({currentView: 'home', username: username, validLogin: true, display_name: display_name, admin: admin});
   }
 
   logoutClicked = () => {
-
+    this.setState({validLogin: false, username: '', admin: false, display_name: '', currentView: 'home'});
   }
 
+
+//render function----------------
   render() {
     let menuclass="sidenav";
     if(this.state.expanded) {
@@ -112,36 +119,27 @@ class App extends Component {
     let settingsMenu;
     let calibrateMenu;
     let updateMenu;
-    let homeMenu;
+    let homeMenu= "home hidden";
     let aboutMenu = "about hidden";
+    let presets_len = this.state.presets.length;
 
-
-    if(this.state.showAccount) { //change Login class to Account
+    if(this.state.currentView==='home') {
+      homeMenu= "home";
+    }
+    else if(this.state.currentView==="about") {
+      aboutMenu="about";
+    }
+    if(this.state.currentView==='account') { //change Login class to Account
       credentialsMenu = (<Login onSuccess={this.onSuccess}/>);
-      homeMenu = "home hidden";
-      aboutMenu = "about hidden";
     }
-    else if(this.state.showSettings) { //change Address class to Settings
+    else if(this.state.currentView==="settings") { //change Address class to Settings
       settingsMenu = (<Address admin={this.state.admin}/>); //only admin
-      homeMenu = "home hidden";
-      aboutMenu = "about hidden";
     }
-    else if(this.state.showCalibrate) {
-      calibrateMenu = (<Calibrate admin={this.state.admin}/>);  //only admin
-      homeMenu = "home hidden";
-      aboutMenu = "about hidden";
+    else if(this.state.currentView==='calibrate') {
+      calibrateMenu = (<Calibrate num_presets={presets_len} admin={this.state.admin} onComplete={this.loadPresets}/>);  //only admin
     }
-    else if(this.state.showUpdate) {
+    else if(this.state.currentView==='update') {
       updateMenu = (<Update admin={this.state.admin}/>);  //only admin
-      homeMenu = "home hidden";
-      aboutMenu = "about hidden";
-    }
-    else if(this.state.showHome) {
-      homeMenu = "home";
-      aboutMenu = "about hidden";
-    } else if(this.state.showAbout) {
-      homeMenu = "home hidden";
-      aboutMenu = "about";
     }
 
     let welcomeMessage = "";
@@ -155,7 +153,6 @@ class App extends Component {
     let adminOptions= "options hidden";
     if(this.state.admin) {
       adminOptions="options";
-      console.log("admin here");
     }
     if(this.state.validLogin) {
       userOptions = "options";
@@ -193,7 +190,10 @@ class App extends Component {
       </div>
     );
   }
-  closeNav() {//false
+
+//  end render function----------------------------------------
+
+closeNav() {//false
     this.setState({expanded: false});
   }
   openNav() {
@@ -201,25 +201,7 @@ class App extends Component {
   }
   sideButtonClicked(str) {
     this.closeNav();
-    if(str==="account") {
-      this.setState({showAccount: true, showHome: false,
-        showSettings: false, showCalibrate: false, showUpdate: false});
-    }
-    else if(str==="settings") {
-      this.setState({showSettings: true, showAccount: false, showHome: false, showCalibrate: false, showUpdate: false});
-    }
-    else if(str==="calibrate") {
-      this.setState({showSettings: false, showAccount: false, showHome: false, showCalibrate: true, showUpdate: false});
-    }
-    else if(str==="update") {
-      this.setState({showSettings: false, showAccount: false, showHome: false, showCalibrate: false, showUpdate: true});
-    }
-    else if(str==="home" || str==="about") {
-      this.setState({showSettings: false, showAccount: false, showHome: true, showCalibrate: false, showUpdate: false});
-      if(str==="about") {
-        this.setState({showHome: false, showAbout: true});
-      }
-    }
+    this.setState({currentView:str});
   }
 }
 

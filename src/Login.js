@@ -21,20 +21,19 @@ class Login extends Component {
       'Accept': 'application/json, text/plain, */*',
       'Content-Type': 'application/json',
       },
+      credentials: "same-origin",
       body: JSON.stringify({username: attemptedUsername, password: attemptedPassword})
     };
     fetch('/api/login', post)
     .then(response => response.json())
     .then(response => {
-        this.setState({success: true});
-        this.setState({attempts: 1});
+        this.setState({success: true, attempts: 1});
         this.props.onSuccess(attemptedUsername, response.display_name, response.admin);
-        console.log("success: " + attemptedUsername +" " + response.display_name +" "+ response.admin);
+        //document.cookie = 'token=...; path=/';
       })
     .catch((error)=> {
       console.log(error);
-      this.setState({success: false});
-      this.setState({attempts: 1});
+      this.setState({success: false, attempts: 1});
     });
   }
 
@@ -51,7 +50,6 @@ class Login extends Component {
     let loginClass="";
     if(this.state.success) {
       loginClass="loginForm hidden";
-      console.log("success here! " + loginClass);
     } else {
        let loginClass="loginForm";
     }

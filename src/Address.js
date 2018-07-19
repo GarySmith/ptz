@@ -16,7 +16,8 @@ class Address extends Component {
       headers: {
         'Accept': 'application/json, text/plain, */*',
         'Content-Type': 'application/json',
-      }
+      },
+      credentials: "same-origin",
     };
 
     fetch('/api/camera', init)
@@ -65,6 +66,7 @@ class Address extends Component {
         'Accept': 'application/json, text/plain, */*',
         'Content-Type': 'application/json',
         },
+        credentials: "same-origin",
         body: JSON.stringify({ip_address: address, ptz_port: port})
       };
       fetch('/api/camera', post)
@@ -78,7 +80,7 @@ class Address extends Component {
     let disableButton = this.state.disablePort || this.state.disableAdd;
     return (
     <div>
-      <div className="header">Camera IP Address</div>
+      <div className="header">Settings</div>
       <div className="view">
 
         <div className="imgRow viewDiv">IP Address:<input type= "text" key="newAddress"
