@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, send_from_directory, request, abort
+from functools import wraps
 from jose import jwt
 from time import sleep
 import json
@@ -12,6 +13,47 @@ from api import settings
 # Default setting used by the PTZ camera
 DEFAULT_IP_ADDRESS = "192.168.100.88"
 DEFAULT_PTZ_PORT = 5678
+
+def needs_user():
+    """
+    Decorator to require that a valid user token be included with the cookies
+    in the request
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            token = request.cookies.get('token')
+            if not token:
+                abort(401, "Not logged in")
+            if not get_token_payload(token):
+                abort(401, "Invalid token supplied")
+            return func(*args, **kwargs)
+        return wrapper
+
+    return decorator
+
+def needs_admin():
+    """
+    Decorator to require that a valid user token with admin priviledges to
+    be included with the cookies in the request
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            token = request.cookies.get('token')
+            if not token:
+                abort(401, "Not logged in")
+            token_payload = get_token_payload(token)
+            if not token_payload:
+                abort(401, "Invalid token supplied")
+            if not token_payload.get('admin'):
+                abort(403, "User must be an admin")
+
+            return func(*args, **kwargs)
+        return wrapper
+
+    return decorator
+
 
 @app.route("/api/presets")
 def get_all_presets():
@@ -28,6 +70,7 @@ def get_all_presets():
 
 
 @app.route("/api/presets/<preset>", methods=['POST'])
+@needs_admin()
 def update_preset_image(preset):
 
     # Get the payload from the image.  This might be better handled by
@@ -36,6 +79,7 @@ def update_preset_image(preset):
 
 
 @app.route("/api/current_preset", methods=['POST'])
+@needs_user()
 def change_current_preset():
     """
     Calls the camera to recall the current preset
@@ -83,6 +127,7 @@ def get_current_preset():
 
 
 @app.route("/api/calibrate", methods=['POST'])
+@needs_admin()
 def calibrate():
     """
     Manipulates the camera to move to each preset and capture the
@@ -151,11 +196,13 @@ def login():
 
 
 @app.route("/api/camera", methods=['GET'])
+@needs_admin()
 def get_camera():
     return jsonify(settings.get_camera_settings())
 
 
 @app.route("/api/camera", methods=['POST'])
+@needs_admin()
 def update_camera_settings():
 
     info = request.get_json()
@@ -170,19 +217,6 @@ def update_camera_settings():
 
     settings.save_settings(camera_settings, 'camera')
     return jsonify("Success")
-
-
-@app.route("/api/position", methods=['GET'])
-def get_position():
-
-    camera_settings = settings.get_camera_settings()
-
-    position = camera.get_position(camera_settings['ip_address'],
-                                   camera_settings['ptz_port'])
-
-    # Do some math to figure out which is the closest known preset
-
-    return jsonify(position)
 
 
 SECRET = None
@@ -215,16 +249,15 @@ AUDIENCE = 'ptzapp'
 @app.route("/api/token", methods=['POST'])
 def validate_token():
     payload = request.get_json()
-    if not is_token_valid(payload['token']):
+    if not get_token_payload(payload['token']):
         abort(401)
 
     return jsonify("Success")
 
 
-def is_token_valid(token):
+def get_token_payload(token):
     try:
-        jwt.decode(token, get_secret(), audience=AUDIENCE)
-        return True
+        return jwt.decode(token, get_secret(), audience=AUDIENCE)
     except Exception as e:
         print("Token invalid: ", e)
 
@@ -237,6 +270,8 @@ def get_token(user, admin=False):
         # 'exp': int(time.time()) + 30,  # for testing expirate times
     }
     return jwt.encode(payload, get_secret(), algorithm='HS256')
+
+
 
 
 # TODO(gary) Need apis for:
