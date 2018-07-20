@@ -7,7 +7,9 @@ import Address from './Address.js';
 import Calibrate from './Calibrate.js';
 import Update from './Update.js';
 import jwt from 'jsonwebtoken';
-import { doFetch } from './RestUtils.js'
+import { doFetch } from './RestUtils.js';
+import ReactTimeout from 'react-timeout';
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -30,7 +32,6 @@ class App extends Component {
     this.loadPresets();
     this.checkLogin();
   }
-
   presetClicked = (num) => {
     if(!this.state.validLogin) {
       return;
@@ -60,10 +61,20 @@ class App extends Component {
     })
     .then(response => {
       this.setState({currentPreset: response.current_preset});
+      this.props.setInterval(this.getCurrentPreset, 5000);
     })
     this.setState({currentView: 'home'});
   }
 
+  getCurrentPreset = () => {
+    console.log("preset requested");
+    doFetch('/api/current_preset', 'GET')
+    .then(response => {
+      if(this.state.currentPreset != response.current_preset) {
+        this.setState({currentPreset: response.current_preset});
+      }
+    });
+  }
 
   onSuccess = (username, display_name, admin) => {
     this.setState({currentView: 'home', username: username, validLogin: true, display_name: display_name, admin: admin});
@@ -84,31 +95,12 @@ class App extends Component {
       menuclass+=" expanded";
     }
 
-    const buttons = this.state.presets.map(e => {
-      let cls="presetImgs";
-      if (e.num === this.state.currentPreset) {
-        if(this.state.pending) {
-          cls+=" pending";
-        } else {
-          cls+= " selectedImg";
-        }
-      }
-
-      return (
-      <div key={e.num} className='imgRow'>
-        <div className="imgCol">
-          <div className="imgNumbers">{e.num}</div>
-          <img src={process.env.PUBLIC_URL + e.image_url} alt="" className={cls} onClick={() => this.presetClicked(e.num)}/>
-        </div>
-      </div>
-    )
-    });
 
     let credentialsMenu;
     let settingsMenu;
     let calibrateMenu;
     let updateMenu;
-    let homeMenu= "home hidden";
+    let homeMenu;
     let aboutMenu = "about hidden";
     let presets_len = this.state.presets.length;
     let dropClass = "dropDown hidden";
@@ -122,7 +114,31 @@ class App extends Component {
       }
     }
     if(this.state.currentView==='home') {
-      homeMenu= "home";
+      const buttons = this.state.presets.map(e => {
+        let cls="presetImgs";
+        if (e.num === this.state.currentPreset) {
+          if(this.state.pending) {
+            cls+=" pending";
+          } else {
+            cls+= " selectedImg";
+          }
+        }
+        return (
+        <div key={e.num} className='imgRow'>
+          <div className="imgCol">
+            <div className="imgNumbers">{e.num}</div>
+            <img src={process.env.PUBLIC_URL + e.image_url} alt="" className={cls} onClick={() => this.presetClicked(e.num)}/>
+          </div>
+        </div>
+      )
+      });
+      homeMenu = (
+          <center>
+          <div>
+              {buttons}
+           </div>
+          </center>
+      );
     }
     else if(this.state.currentView==="about") {
       aboutMenu="about";
@@ -180,11 +196,7 @@ class App extends Component {
           </div>
         </div>
         <span onClick={(e) => this.openNav(e)}>&#9776;</span>
-        <center>
-          <div className={homeMenu}>
-            {buttons}
-          </div>
-        </center>
+        {homeMenu}
        <center> <div className={aboutMenu}>Copyright Gary Smith and Holly Donis 2018</div></center>
         {credentialsMenu}
         {settingsMenu}
@@ -227,4 +239,4 @@ iconClicked = () => {
     }
   }
 }
-export default App;
+export default ReactTimeout(App);
