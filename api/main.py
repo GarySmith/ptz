@@ -223,6 +223,28 @@ def delete_user(user):
     return jsonify('Success')
 
 
+@app.route("/api/users", methods=['GET'])
+@needs_admin()
+def get_all_users():
+
+    accounts = DB.table('accounts')
+    User = Query()
+    all_users = [user['username'] for user in accounts.all()]
+    return jsonify(all_users)
+
+
+@app.route("/api/users/<user>", methods=['GET'])
+@needs_admin()
+def get_user(user):
+
+    accounts = DB.table('accounts')
+    User = Query()
+    if not accounts.search(User.username == user):
+        abort(401, 'Invalid user')
+
+    return jsonify(accounts.search(User.username == user))
+
+
 @app.route("/api/users", methods=['POST'])
 @needs_admin()
 def create_user():
