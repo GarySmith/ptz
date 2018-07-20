@@ -70,7 +70,7 @@ class Address extends Component {
 
         <div className="imgRow viewDiv">
           {errorMessage}
-          <Button type="submit" bsStyle="success" disabled={! enableButton} onClick={this.onSubmit}>submit</Button>
+          <Button type="submit" bsStyle="success" disabled={! enableButton} onClick={this.onSubmit}>Submit</Button>
         </div>
 
       </div>

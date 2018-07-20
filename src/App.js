@@ -9,6 +9,8 @@ import Update from './Update.js';
 import jwt from 'jsonwebtoken';
 import { doFetch } from './RestUtils.js';
 import ReactTimeout from 'react-timeout';
+import ManageAccount from './ManageAccount.js';
+import AddUser from './AddUser.js';
 
 class App extends Component {
   constructor(props) {
@@ -116,6 +118,8 @@ class App extends Component {
     let presets_len = this.state.presets.length;
     let dropClass = "dropDown hidden";
     let dropOption = "dropOption hidden";
+    let manageAccount;
+    let addUser;
 
     if(this.state.dropDown) {
       dropClass = "dropDown";
@@ -154,7 +158,7 @@ class App extends Component {
     else if(this.state.currentView==="about") {
       aboutMenu="about";
     }
-    if(this.state.currentView==='login') {
+    else if(this.state.currentView==='login') {
       credentialsMenu = (<Login onSuccess={this.onSuccess}/>);
     }
     else if(this.state.currentView==="settings") { //change Address class to Settings
@@ -165,6 +169,12 @@ class App extends Component {
     }
     else if(this.state.currentView==='update') {
       updateMenu = (<Update admin={this.state.admin}/>);  //only admin
+    }
+    else if(this.state.currentView==='manageAccount') {
+      manageAccount = (<ManageAccount admin={this.state.admin}/>);
+    }
+    else if(this.state.currentView==='addUser') {
+      addUser = (<AddUser admin={this.state.admin}/>);
     }
 
     let welcomeMessage = "";
@@ -196,23 +206,27 @@ class App extends Component {
 
           </div>
         </div>
-        <div className="title">PTZ Cam App</div>
+        <div className="title">PTZ Camera App</div>
         <div className="username">
           <div className="welcomeMessage">{welcomeMessage}</div>
           <div className="logout" onClick={this.iconClicked}></div>
           <div className={dropClass}>
-            <div className={dropOption} onClick={this.manageAccount}>Manage Account</div>
-            <div className={dropOption} onClick={this.addUsers}>Add Users</div>
+            <div className={dropOption} onClick={() => this.dropOptionClicked('manageAccount')}>Manage Account</div>
+            <div className={dropOption} onClick={() => this.dropOptionClicked('addUser')}>Add Users</div>
             <div className={dropOption} onClick={this.logoutClicked}>Logout</div>
           </div>
         </div>
-        <span onClick={(e) => this.openNav(e)}>&#9776;</span>
+        <span className="hamburger" onClick={(e) => this.openNav(e)}>&#9776;</span>
+        <div className="middleView">
         {homeMenu}
        <center> <div className={aboutMenu}>Copyright Gary Smith and Holly Donis 2018</div></center>
         {credentialsMenu}
         {settingsMenu}
         {calibrateMenu}
         {updateMenu}
+        {manageAccount}
+        {addUser}
+        </div>
       </div>
     );
   }
@@ -224,7 +238,9 @@ iconClicked = () => {
     this.setState({dropDown: false});
   }
   else {
-    this.setState({dropDown: true});
+    if(this.state.validLogin) {
+      this.setState({dropDown: true});
+    }
   }
 }
 
@@ -239,15 +255,8 @@ iconClicked = () => {
     this.setState({currentView:str});
   }
 
-  manageAccount= () => {
-    if(!this.state.validLogin) {
-      return;
-    }
-  }
-  addUsers = () => {
-    if(!this.state.admin) {
-     return;
-    }
+  dropOptionClicked = (str) => {
+    this.setState({currentView: str});
   }
 }
 export default ReactTimeout(App);

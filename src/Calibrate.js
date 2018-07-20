@@ -53,10 +53,10 @@ class Calibrate extends Component {
         <center>
         <div className="calMessage">Max number of presets: </div>
         <input type="number" min="1" max="255" value={this.state.numPresets} className="dial" onChange={this.updateDial.bind(this)}></input>
-        <div><button disabled={this.state.waiting}
+        <div><Button bsStyle='success' disabled={this.state.waiting}
           onClick={!this.state.waiting ? this.calibrate : null}>
-         {this.state.waiting ? 'Loading...' : 'submit'}
-        </button></div>
+         {this.state.waiting ? 'Loading...' : 'Submit'}
+        </Button></div>
         <div className={loaderClass}></div>
         <div className="calMessage">{this.state.message}</div>
         </center>
