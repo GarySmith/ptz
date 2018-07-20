@@ -95,8 +95,18 @@ def get_current_preset():
     if (len(match) > 0):
         return jsonify({'current_preset': match[0]['num']})
 
-    # TODO(gary): Add extra logic to permit the value to be close to, but
-    # not exactly that corresponding to a preset
+    # There is no direct match, so search for one that is close.  Each
+    # field is represented as a 2-byte unsigned integer, so that its
+    # value potentially ranges from 0 to 65536, but it appears that some
+    # values, especially focus and pan, only a small portion of this range.
+    # Therefore, consider a "close" value to be within +/= 5 of its target.
+    for preset in presets.all():
+        if preset['zoom'] - 5 <= position['zoom'] <= preset['zoom'] + 5 and \
+           preset['focus'] - 5 <= position['focus'] <= preset['focus'] + 5 and \
+           preset['pan'] - 5 <= position['pan'] <= preset['pan'] + 5 and \
+           preset['tilt'] - 5 <= position['tilt'] <= preset['tilt'] + 5:
+
+            return jsonify({'current_preset': preset['num']})
 
     return jsonify({'current_preset': -1})
 
