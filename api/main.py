@@ -204,6 +204,24 @@ def update_password(user, new_pass):
     return jsonify('Success')
 
 
+@app.route("/api/users/<user>", methods=['DELETE'])
+@needs_admin()
+def delete_user(user):
+
+    token = request.cookies.get('token')
+    payload = get_token_payload(token)
+    if payload['user'] == user:
+        abort(422, 'Cannot delete yourself')
+
+    accounts = DB.table('accounts')
+    User = Query()
+    if not accounts.search(User.username == user):
+        abort(401, 'Invalid user')
+
+    accounts.remove(User.username == user)
+    return jsonify('Success')
+
+
 @app.route("/api/camera", methods=['GET'])
 @needs_admin()
 def get_camera():
