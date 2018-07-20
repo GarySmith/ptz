@@ -1,82 +1,77 @@
 import React, { Component } from 'react';
+import { Button } from 'react-bootstrap';
 import { doFetch } from './RestUtils.js';
 
 class Address extends Component {
   constructor(props) {
     super(props);
       this.state= {
-        addressInput: '128.0.0.0',
-        portInput: '50',
-        disableAdd: false,
-        disablePort: false,
+        addressInput: '196.168.100.88',  // Default address used by the camera
+        portInput: '5678',               // Default port used by the camera
+        addressValid: true,
+        portValid: true,
+        message: '',
       };
-  } //this.props.admin
+  }
+
   componentDidMount = () => {
     doFetch('/api/camera', 'GET')
     .then(response => {
       this.setState({addressInput: response.ip_address, portInput: response.ptz_port});
     })
-    if(!this.props.admin) {
-      this.setState({disableAdd:true, disablePort: true});
-    }
   }
 
-  updateAddressInput(evt) {
-      const IPV4ADDRESS = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-      const val = evt.target.value;
-      this.setState({addressInput: val});
-      if(IPV4ADDRESS.exec(val)===null) {
-      this.setState({disableAdd:true}); //IP address is invalid, so disable button
-      }
-      else if (this.props.admin) { //IP address is valid and admin is logged in: enable button
-        this.setState({disableAdd:false});
-      }
+  updateAddressInput = (evt) => {
+    const val = evt.target.value;
+    const IPV4ADDRESS = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    const addressValid = (IPV4ADDRESS.exec(val) !== null);
+    this.setState({addressInput: val, addressValid: addressValid});
   }
-  updatePortInput(evt) {
-      const val = evt.target.value;
-      this.setState({portInput: val});
-      if(0 < val && val < 65536 && this.props.admin) {  //if port number is between 1 and 65536, set disable button to false (enable button)
-      this.setState({disablePort: false});
-      }
-      else {   //if port number is less than 0 or greater than 65535, disable button
-        this.setState({disablePort: true});
-      }
+
+  updatePortInput = (evt) => {
+    const val = evt.target.value;
+    const portValid = (0 < val && val < 65536); //if port number is between 1 and 65536, set disable button to false (enable button)
+    this.setState({portInput: val, portValid: portValid});
   }
-  submit() {
-    let address = this.state.addressInput;
 
-    let port = this.state.portInput;
-
-      const post = {
-        method: 'POST',
-        headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json',
-        },
-        credentials: "same-origin",
-        body: JSON.stringify({ip_address: address, ptz_port: port})
-      };
-      doFetch('/api/camera', 'POST', JSON.stringify({ip_address: address, ptz_port: port}))
+  onSubmit = () => {
+    this.setState({message: ''});  // Clear any error message if retrying
+    doFetch('/api/camera', 'POST', JSON.stringify({
+      ip_address: this.state.addressInput,
+      ptz_port: this.state.portInput,
+    }))
     .then(response => {
         console.log("sent ip and port to api");
-    })
+        this.props.onComplete();
+    }).catch(error => {
+      console.error("Error updating address/port: " + error);
+      this.setState({message: 'Invalid host/port'});
+    });
   }
 
   render() {
-    let disableButton = this.state.disablePort || this.state.disableAdd;
+    let enableButton = this.state.portValid && this.state.addressValid;
+    let errorMessage;
+
+    if (this.state.message) {
+       errorMessage = (<div className="error">{this.state.message}</div>);
+    }
+
     return (
     <div>
       <div className="header">Settings</div>
       <div className="view">
 
         <div className="imgRow viewDiv">IP Address:<input type= "text" key="newAddress"
-          value={this.state.addressInput} onChange={this.updateAddressInput.bind(this)}></input></div>
+          value={this.state.addressInput} onChange={this.updateAddressInput}></input></div>
 
         <div className="imgRow viewDiv">PTZ Port:<input type= "text" key="newPort"
-          value={this.state.portInput} onChange={this.updatePortInput.bind(this)}></input></div>
+          value={this.state.portInput} onChange={this.updatePortInput}></input></div>
 
         <div className="imgRow viewDiv">
-          <button key="addressButton" disabled={disableButton} onClick={() => this.submit()}>Enter</button></div>
+          {errorMessage}
+          <Button type="submit" bsStyle="success" disabled={! enableButton} onClick={this.onSubmit}>submit</Button>
+        </div>
 
       </div>
     </div>

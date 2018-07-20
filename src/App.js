@@ -158,7 +158,7 @@ class App extends Component {
       credentialsMenu = (<Login onSuccess={this.onSuccess}/>);
     }
     else if(this.state.currentView==="settings") { //change Address class to Settings
-      settingsMenu = (<Address admin={this.state.admin}/>); //only admin
+      settingsMenu = (<Address onComplete={this.loadPresets}/>); //only admin
     }
     else if(this.state.currentView==='calibrate') {
       calibrateMenu = (<Calibrate num_presets={presets_len} admin={this.state.admin} onComplete={this.loadPresets}/>);  //only admin
