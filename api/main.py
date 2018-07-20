@@ -148,6 +148,7 @@ def get_image_file(name):
 
 @app.route("/api/login", methods=['POST'])
 def login():
+
     info = request.get_json()
     username = info.get('username')
     password = info.get('password')
@@ -222,9 +223,32 @@ def delete_user(user):
     return jsonify('Success')
 
 
+@app.route("/api/users", methods=['POST'])
+@needs_admin()
+def create_user():
+
+    info = request.get_json()
+
+    username = info['username']
+    accounts = DB.table('accounts')
+    User = Query()
+    if accounts.search(User.username == username):
+        abort(401, 'User already exists')
+
+    user = {
+        'username': username,
+        'password': info['password'],
+        'admin': info.get('admin') in ('true', True),
+        'display_name': info.get('display_name', ''),
+    }
+    accounts.insert(user)
+    return jsonify('Success')
+
+
 @app.route("/api/camera", methods=['GET'])
 @needs_admin()
 def get_camera():
+
     return jsonify(get_camera_settings())
 
 
