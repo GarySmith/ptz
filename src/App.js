@@ -42,6 +42,17 @@ class App extends Component {
    .then(response => {
     this.setState({pending: false});
     })
+   .catch(error => {
+     let newState = {pending: false};
+     if (error.status == 401 || error.status == 403) {
+       newState.currentView = 'login';
+       newState.validLogin = false;
+       newState.username = false;
+       newState.display_name = false;
+       newState.admin = false;
+     }
+     this.setState(newState);
+   });
   }
 
   checkLogin = () => {
