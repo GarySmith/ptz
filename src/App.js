@@ -114,7 +114,7 @@ class App extends Component {
     let calibrateMenu;
     let updateMenu;
     let homeMenu;
-    let aboutMenu = "about hidden";
+    let aboutMenu;
     let presets_len = this.state.presets.length;
     let dropClass = "dropDown hidden";
     let dropOption = "dropOption hidden";
@@ -141,8 +141,8 @@ class App extends Component {
         return (
         <div key={e.num} className='imgRow'>
           <div className="imgCol">
-            <div className="imgNumbers">{e.num}</div>
             <img src={process.env.PUBLIC_URL + e.image_url} alt="" className={cls} onClick={() => this.presetClicked(e.num)}/>
+            <div className="imgNumbers">{e.num}</div>
           </div>
         </div>
       )
@@ -156,7 +156,7 @@ class App extends Component {
       );
     }
     else if(this.state.currentView==="about") {
-      aboutMenu="about";
+      aboutMenu = (<center> <div className={aboutMenu}>Copyright Gary Smith and Holly Donis 2018</div></center>);
     }
     else if(this.state.currentView==='login') {
       credentialsMenu = (<Login onSuccess={this.onSuccess}/>);
@@ -203,29 +203,25 @@ class App extends Component {
             <div className={adminOptions} onClick={()=> this.sideButtonClicked("update")}>Update/Upload Image</div>
             <div className="options" onClick={()=> this.sideButtonClicked("about")}>About</div>
             <div className={loginView} onClick={()=> this.sideButtonClicked("login")}>Login</div>
-
           </div>
-        </div>
-        <div className="title">PTZ Camera App</div>
-        <div className="username">
-          <div className="welcomeMessage">{welcomeMessage}</div>
-          <div className="logout" onClick={this.iconClicked}></div>
+          <span className="hamburger" onClick={(e) => this.openNav(e)}>&#9776;</span>
+          <div className="title">PTZ Cam App</div>
+          <div className="usermenu" onClick={this.iconClicked}>{welcomeMessage}</div>
           <div className={dropClass}>
             <div className={dropOption} onClick={() => this.dropOptionClicked('manageAccount')}>Manage Account</div>
             <div className={dropOption} onClick={() => this.dropOptionClicked('addUser')}>Add Users</div>
             <div className={dropOption} onClick={this.logoutClicked}>Logout</div>
           </div>
         </div>
-        <span className="hamburger" onClick={(e) => this.openNav(e)}>&#9776;</span>
         <div className="middleView">
-        {homeMenu}
-       <center> <div className={aboutMenu}>Copyright Gary Smith and Holly Donis 2018</div></center>
-        {credentialsMenu}
-        {settingsMenu}
-        {calibrateMenu}
-        {updateMenu}
-        {manageAccount}
-        {addUser}
+          {homeMenu}
+          {aboutMenu}
+          {credentialsMenu}
+          {settingsMenu}
+          {calibrateMenu}
+          {updateMenu}
+          {manageAccount}
+          {addUser}
         </div>
       </div>
     );

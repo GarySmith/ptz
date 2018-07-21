@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button } from 'react-bootstrap';
+import { Button, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import { doFetch } from './RestUtils.js';
 
 class Address extends Component {
@@ -34,8 +34,8 @@ class Address extends Component {
     this.setState({portInput: val, portValid: portValid});
   }
 
-  onSubmit = () => {
-    this.setState({message: ''});  // Clear any error message if retrying
+  onSubmit = (evt) => {
+    evt.preventDefault();
     doFetch('/api/camera', 'POST', JSON.stringify({
       ip_address: this.state.addressInput,
       ptz_port: this.state.portInput,
@@ -50,32 +50,27 @@ class Address extends Component {
   }
 
   render() {
-    let enableButton = this.state.portValid && this.state.addressValid;
-    let errorMessage;
-
-    if (this.state.message) {
-       errorMessage = (<div className="error">{this.state.message}</div>);
-    }
+    const enableButton = this.state.portValid && this.state.addressValid;
 
     return (
-    <div>
-      <div className="header">Settings</div>
-      <div className="view">
-
-        <div className="imgRow viewDiv">IP Address:<input type= "text" key="newAddress"
-          value={this.state.addressInput} onChange={this.updateAddressInput}></input></div>
-
-        <div className="imgRow viewDiv">PTZ Port:<input type= "text" key="newPort"
-          value={this.state.portInput} onChange={this.updatePortInput}></input></div>
-
-        <div className="imgRow viewDiv">
-          {errorMessage}
+      <div>
+        <div className="header">Settings</div>
+        <form>
+          <FormGroup controlId="cameraIPAddress" validationState={this.state.addressValid ? 'success' : 'error'}>
+            <ControlLabel>IP Address</ControlLabel>
+            <FormControl type="text" size="15" maxLength="15" value={this.state.addressInput} onChange={this.updateAddressInput}/>
+            <FormControl.Feedback />
+          </FormGroup>
+          <FormGroup controlId="cameraPort" validationState={this.state.portValid ? 'success' : 'error'}>
+            <ControlLabel>PTZ Port</ControlLabel>
+            <FormControl type="number" min="1" max="65535" size="5" value={this.state.portInput} onChange={this.updatePortInput}/>
+            <FormControl.Feedback />
+          </FormGroup>
           <Button type="submit" bsStyle="success" disabled={! enableButton} onClick={this.onSubmit}>Submit</Button>
-        </div>
-
+          <div className="error">{this.state.message}</div>
+        </form>
       </div>
-    </div>
-  );
+    );
   }
 }
 
