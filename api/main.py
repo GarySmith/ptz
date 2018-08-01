@@ -17,7 +17,9 @@ logging.basicConfig(level=logging.DEBUG, handlers=[handler])
 
 LOG = logging.getLogger(__name__)
 
-app = Flask(__name__)
+app = Flask(__name__,
+            static_url_path='',
+            static_folder='web')
 app.logger
 app.logger.handlers = []
 app.logger.propagate = True

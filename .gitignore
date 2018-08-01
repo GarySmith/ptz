@@ -6,3 +6,4 @@ package-lock.json
 settings.json
 secret.txt
 ptz.log*
+build
