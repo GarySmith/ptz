@@ -140,6 +140,7 @@ def calibrate():
     for preset in presets:
         camera.recall_preset(ip, port, preset['num'])
         position = camera.get_position(ip, port)
+        print("Preset {} is at {!s}".format(preset['num'], position))
         preset.update(position)
 
     preset_tbl = DB.table('presets')
