@@ -15,7 +15,7 @@ import AddUser from './AddUser.js';
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state={
+    this.state = {
       expanded: false,
       presets : [],
       currentPreset: -1,
@@ -31,18 +31,24 @@ class App extends Component {
   }
 
   componentDidMount = () => {
-    this.loadPresets();
+    this.initialLoadPresets();
     this.checkLogin();
   }
+  componentWillUnmount = () => {
+      this.cancelPolling();
+  }
+
   presetClicked = (num) => {
     if(!this.state.validLogin) {
       return;
     }
+    this.cancelPolling();
     this.setState({currentPreset: num, pending: true});
 
     doFetch('/api/current_preset', "POST", JSON.stringify({current_preset: num}))
     .then(response => {
       this.setState({pending: false});
+      this.startPolling();
     })
     .catch(error => {
       let newState = {pending: false};
@@ -66,7 +72,8 @@ class App extends Component {
     }
   }
 
-  loadPresets = () => {
+  initialLoadPresets = () => {
+    console.log("initial fetch");
     doFetch('/api/presets', 'GET')
     .then(response => {
       this.setState({
@@ -78,23 +85,32 @@ class App extends Component {
     .then(response => {
       this.setState({currentPreset: response.current_preset});
       console.log("Succeeded in getting current_preset, repeating every 5 seconds");
-      this.props.setInterval(this.getCurrentPreset, 5000);
+      this.startPolling();
     })
     .catch(error => {
       console.log("Unable to obtain presets");
     })
   }
 
-  getCurrentPreset = () => {
-    console.log("preset requested");
-    doFetch('/api/current_preset', 'GET')
-    .then(response => {
-      this.setState({currentPreset: response.current_preset});
-    })
-    .catch(error => {
-      console.log("Error polling for current position " + error);
-      this.props.clearInterval();  // This is NOT cancelling the interval !
-    });
+  startPolling = () => {
+    console.log('Starting polling');
+    this.interval = setInterval(() => {
+      console.log("Polling for preset");
+      doFetch('/api/current_preset', 'GET')
+      .then(response => {
+        console.log("Current preset: " + response.current_preset);
+        this.setState({currentPreset: response.current_preset});
+      })
+      .catch(error => {
+        console.log("Cancelling polling. Error polling for current position " + error);
+        this.cancelPolling();
+      });
+    }, 5000);
+  }
+
+  cancelPolling = () => {
+    console.log('Cancelling polling');
+    clearInterval(this.interval);
   }
 
   onSuccess = (username, display_name, admin) => {
@@ -170,10 +186,11 @@ class App extends Component {
       credentialsMenu = (<Login onSuccess={this.onSuccess}/>);
     }
     else if(this.state.currentView==="settings") { //change Address class to Settings
-      settingsMenu = (<Address onComplete={this.loadPresets}/>); //only admin
+      // TODO: This looks problematic. It may possibly trigger multiple timers
+      settingsMenu = (<Address onComplete={this.initialLoadPresets}/>); //only admin
     }
     else if(this.state.currentView==='calibrate') {
-      calibrateMenu = (<Calibrate num_presets={presets_len} admin={this.state.admin} onComplete={this.loadPresets}/>);  //only admin
+      calibrateMenu = (<Calibrate num_presets={presets_len} admin={this.state.admin} onComplete={this.initialLoadPresets}/>);  //only admin
     }
     else if(this.state.currentView==='update') {
       updateMenu = (<Update admin={this.state.admin}/>);  //only admin
