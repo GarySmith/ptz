@@ -94,6 +94,9 @@ class App extends Component {
 
   startPolling = () => {
     console.log('Starting polling');
+    if (this.interval) {
+      clearInterval(this.interval);
+    }
     this.interval = setInterval(() => {
       console.log("Polling for preset");
       doFetch('/api/current_preset', 'GET')
