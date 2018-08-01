@@ -40,59 +40,60 @@ class App extends Component {
     }
     this.setState({currentPreset: num, pending: true});
 
-   doFetch('/api/current_preset', "POST", JSON.stringify({current_preset: num}))
-   .then(response => {
-    this.setState({pending: false});
+    doFetch('/api/current_preset', "POST", JSON.stringify({current_preset: num}))
+    .then(response => {
+      this.setState({pending: false});
     })
-   .catch(error => {
-     let newState = {pending: false};
-     if (error.status == 401 || error.status == 403) {
-       newState.currentView = 'login';
-       newState.validLogin = false;
-       newState.username = false;
-       newState.display_name = false;
-       newState.admin = false;
-     }
-     this.setState(newState);
-   });
+    .catch(error => {
+      let newState = {pending: false};
+      if (error.status === 401 || error.status === 403) {
+        newState.currentView = 'login';
+        newState.validLogin = false;
+        newState.username = false;
+        newState.display_name = false;
+        newState.admin = false;
+      }
+      this.setState(newState);
+    });
   }
 
   checkLogin = () => {
     const cookies = new Cookies();
     let token = cookies.get('token');
     let decode = jwt.decode(token);
-    if(token!=undefined) {
+    if(token) {
       this.onSuccess(decode.user, decode.name, decode.admin);
     }
   }
 
   loadPresets = () => {
-    let isError=false;
     doFetch('/api/presets', 'GET')
     .then(response => {
-      this.setState({presets: response});
+      this.setState({
+        presets: response,
+        currentView: 'home',
+      });
       return doFetch('/api/current_preset', 'GET')
     })
-    .catch(error => {
-      console.log("caught error in App.js");
-      isError = true;
-    })
     .then(response => {
-      if(!isError) {
-        this.setState({currentPreset: response.current_preset});
-        this.props.setInterval(this.getCurrentPreset, 5000);
-      }
+      this.setState({currentPreset: response.current_preset});
+      console.log("Succeeded in getting current_preset, repeating every 5 seconds");
+      this.props.setInterval(this.getCurrentPreset, 5000);
     })
-    this.setState({currentView: 'home'});
+    .catch(error => {
+      console.log("Unable to obtain presets");
+    })
   }
 
   getCurrentPreset = () => {
     console.log("preset requested");
     doFetch('/api/current_preset', 'GET')
     .then(response => {
-      if(this.state.currentPreset != response.current_preset) {
-        this.setState({currentPreset: response.current_preset});
-      }
+      this.setState({currentPreset: response.current_preset});
+    })
+    .catch(error => {
+      console.log("Error polling for current position " + error);
+      this.props.clearInterval();  // This is NOT cancelling the interval !
     });
   }
 
@@ -135,7 +136,7 @@ class App extends Component {
         dropOption= "dropOption disable";
       }
     }
-    if(this.state.currentView==='home') {
+    if(this.state.currentView === 'home') {
       const buttons = this.state.presets.map(e => {
         let cls="presetImgs";
         if (e.num === this.state.currentPreset) {
@@ -189,14 +190,12 @@ class App extends Component {
       welcomeMessage = "Hello, " + this.state.display_name;
     }
 
-    let userOptions = "options hidden";
     let adminOptions= "options hidden";
     let loginView = "options";
     if(this.state.admin) {
       adminOptions="options";
     }
     if(this.state.validLogin) {
-      userOptions = "options";
       loginView = "options hidden";
     }
     return (

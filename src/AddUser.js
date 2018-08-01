@@ -1,11 +1,8 @@
 import React, { Component } from 'react';
-import Cookies from 'universal-cookie';
-import jwt from 'jsonwebtoken';
 import { doFetch } from './RestUtils.js';
 import { FormGroup } from 'react-bootstrap';
 import { FormControl } from 'react-bootstrap';
 import { ControlLabel } from 'react-bootstrap';
-import { HelpBlock } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
 import { Checkbox } from 'react-bootstrap';
 
@@ -37,7 +34,7 @@ class AddUser extends Component {
     if(this.state.username.length<3 || this.state.displayname.length<3 || this.state.password.length<3) {
       this.setState({errorMessage: "Please make sure all entries are at least 3 characters long"});
     }
-    else if(this.state.passConfirm!=this.state.password) {
+    else if(this.state.passConfirm !== this.state.password) {
       this.setState({errorMessage: "Passwords don't match"});
     }
     else {
@@ -65,8 +62,8 @@ class AddUser extends Component {
     }
     else {
       len=this.state.passConfirm.length;
-      if(len==0) { return null; }
-      else if(len!=this.state.password.length) { return 'error'; }
+      if(len === 0) { return null; }
+      else if(len !== this.state.password.length) { return 'error'; }
     }
     if(len > 2) {
       return 'success';
