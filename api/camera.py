@@ -8,6 +8,11 @@ INQ_PANTILT = bytes([ 0x81, 0x09, 0x06, 0x12, 0xFF ])
 RECALL_PRESET = bytes([ 0x81, 0x01, 0x04, 0x3F, 0x02, 0x00, 0xFF ])
 EOM = bytes([ 0xFF ])
 
+# Enable debugging the network traffice with print statements.  These
+# give a real-time, digestible format for logging, as opposed to logging
+# statements
+DEBUG_PRINT = False
+
 
 def get_position(ip_address, port):
     # Communicates with the PTZ camera and obtains its current position, which
@@ -64,50 +69,46 @@ def recall_preset(ip_address, port, preset):
     last_pos = {}
     current_pos = get_position(ip_address, port)
     while(current_pos != last_pos and time.time() - start_time < 7):
-        print("(Sleeping)")
+        debug_print("(Sleeping while camera moves)")
         time.sleep(0.1)
         last_pos = current_pos
         current_pos = get_position(ip_address, port)
-    print()
 
 
 def send_bytes(s, msg):
-    print ("Sent    : ", end="")
+    debug_print ("Sent    : ", end="")
     total_sent = 0
     to_send = len(msg)
     while total_sent < to_send:
         sent = s.send(msg[total_sent:])
 
-        print(" ".join("{:02X}".format(c) for c in msg[total_sent:sent]),
-              end="")
-        print(" ", end="")
+        debug_print(msg[total_sent:sent], end="")
 
         if sent == 0:
             raise RuntimeError("socket connection broken")
         total_sent = total_sent + sent
 
-    print("")
+    debug_print()
 
 
 def receive_bytes(s, maxlen=20):
     msg = bytearray()
     remaining = maxlen
-    print("Received: ",end="")
+    debug_print("Received: ",end="")
     while remaining > 0:
         chunk = s.recv(1)
         if len(chunk) == 0:
-            print("socket connection broken")
+            debug_print("socket connection broken")
             break
         else:
-            print("{:02X}".format(chunk[0]), end="")
-            print(" ", end="")
+            debug_print(chunk, end="")
             msg.extend(chunk)
             if chunk == EOM:
                 break
 
             remaining = maxlen - len(msg)
 
-    print("")
+    debug_print()
     return msg
 
 def test_connection(ip_address, port):
@@ -119,3 +120,16 @@ def test_connection(ip_address, port):
         return True
     except socket.error as e:
         pass
+
+def debug_print(msg=None, end='\n'):
+
+    if not DEBUG_PRINT:
+        return
+
+    if msg is None:
+        print(end=end, flush=True)
+    elif isinstance(msg, (bytes, bytearray)):
+        print(" ".join("{:02X}".format(c) for c in msg) + " ", end=end,
+              flush=True)
+    else:
+        print(msg, end=end, flush=True)
