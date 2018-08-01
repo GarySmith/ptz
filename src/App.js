@@ -67,14 +67,21 @@ class App extends Component {
   }
 
   loadPresets = () => {
+    let isError=false;
     doFetch('/api/presets', 'GET')
     .then(response => {
       this.setState({presets: response});
       return doFetch('/api/current_preset', 'GET')
     })
+    .catch(error => {
+      console.log("caught error in App.js");
+      isError = true;
+    })
     .then(response => {
-      this.setState({currentPreset: response.current_preset});
-      this.props.setInterval(this.getCurrentPreset, 5000);
+      if(!isError) {
+        this.setState({currentPreset: response.current_preset});
+        this.props.setInterval(this.getCurrentPreset, 5000);
+      }
     })
     this.setState({currentView: 'home'});
   }
