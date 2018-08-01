@@ -26,8 +26,8 @@ def get_position(ip_address, port):
         s.connect((ip_address, port))
 
         # Get ZOOM
-        mysend(s, INQ_ZOOM)
-        resp = myreceive(s)
+        send_bytes(s, INQ_ZOOM)
+        resp = receive_bytes(s)
         zoom = 0
         for i in range(2, 6):
             zoom = (zoom * 16) + (resp[i] & 0x0F)
@@ -37,8 +37,8 @@ def get_position(ip_address, port):
         s.connect((ip_address, port))
 
         # Get PAN, TILT
-        mysend(s, INQ_PANTILT)
-        resp = myreceive(s)
+        send_bytes(s, INQ_PANTILT)
+        resp = receive_bytes(s)
         pan = 0
         for i in range(2, 6):
             pan = (pan * 16) + (resp[i] & 0x0F)
@@ -58,8 +58,8 @@ def recall_preset(ip_address, port, preset):
     start_time = time.time()
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((ip_address, port))
-        mysend(s, req)
-        resp = myreceive(s)
+        send_bytes(s, req)
+        resp = receive_bytes(s)
 
     last_pos = {}
     current_pos = get_position(ip_address, port)
@@ -71,7 +71,7 @@ def recall_preset(ip_address, port, preset):
     print()
 
 
-def mysend(s, msg):
+def send_bytes(s, msg):
     print ("Sent    : ", end="")
     total_sent = 0
     to_send = len(msg)
@@ -89,7 +89,7 @@ def mysend(s, msg):
     print("")
 
 
-def myreceive(s, maxlen=20):
+def receive_bytes(s, maxlen=20):
     msg = bytearray()
     remaining = maxlen
     print("Received: ",end="")
