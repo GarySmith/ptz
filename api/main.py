@@ -155,7 +155,10 @@ def calibrate():
 def get_image_file(name):
 
     dir = os.path.normpath(os.path.join( os.getcwd(), 'public', 'images'))
-    return send_from_directory(dir, name)
+    if (os.path.isfile(os.path.join(dir, name))):
+        return send_from_directory(dir, name)
+    else:
+        return send_from_directory(dir, 'other.jpg')
 
 
 @app.route("/api/login", methods=['POST'])
