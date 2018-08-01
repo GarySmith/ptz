@@ -96,7 +96,8 @@ def receive_bytes(s, maxlen=20):
     while remaining > 0:
         chunk = s.recv(1)
         if len(chunk) == 0:
-            print("empty chunk received")
+            print("socket connection broken")
+            break
         else:
             print("{:02X}".format(chunk[0]), end="")
             print(" ", end="")
