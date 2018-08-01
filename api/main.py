@@ -60,6 +60,9 @@ def change_current_preset():
     Calls the camera to recall the current preset
     """
     payload = request.get_json()
+    if 'current_preset' not in payload:
+        abort(406, "current_preset missing from request")
+
     preset = int(payload.get('current_preset', 0))
     if preset < 0 or preset > 255:
         abort(406, "Invalid preset")
