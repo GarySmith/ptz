@@ -1,10 +1,14 @@
 import socket
+import logging
 
 INQ_FOCUS = bytes([ 0x81, 0x09, 0x04, 0x48, 0xFF ])
 INQ_ZOOM = bytes([ 0x81, 0x09, 0x04, 0x47, 0xFF ])
 INQ_PANTILT = bytes([ 0x81, 0x09, 0x06, 0x12, 0xFF ])
 RECALL_PRESET = bytes([ 0x81, 0x01, 0x04, 0x3F, 0x02, 0x00, 0xFF ])
+EOM = bytes([ 0xFF ])
 
+
+LOG = logging.getLogger(__name__)
 
 def get_position(ip_address, port):
     # Communicates with the PTZ camera and obtains its current position, which
@@ -25,7 +29,7 @@ def get_position(ip_address, port):
 
         # Get ZOOM
         mysend(s, INQ_ZOOM)
-        resp = myreceive(s, 7)
+        resp = myreceive(s)
         zoom = 0
         for i in range(2, 6):
             zoom = (zoom * 16) + (resp[i] & 0x0F)
@@ -36,7 +40,7 @@ def get_position(ip_address, port):
 
         # Get FOCUS
         mysend(s, INQ_FOCUS)
-        resp = myreceive(s, 7)
+        resp = myreceive(s)
         focus = 0
         for i in range(2, 6):
             focus = (focus * 16) + (resp[i] & 0x0F)
@@ -47,7 +51,7 @@ def get_position(ip_address, port):
 
         # Get PAN, TILT
         mysend(s, INQ_PANTILT)
-        resp = myreceive(s, 11)
+        resp = myreceive(s)
         pan = 0
         for i in range(2, 6):
             pan = (pan * 16) + (resp[i] & 0x0F)
@@ -67,10 +71,11 @@ def recall_preset(ip_address, port, preset):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((ip_address, port))
         mysend(s, req)
-        resp = myreceive(s, 6)
+        resp = myreceive(s)
 
 
 def mysend(s, msg):
+    print ("Sent    :", " ".join("{:02X}".format(c) for c in msg))
     total_sent = 0
     to_send = len(msg)
     while total_sent < to_send:
@@ -80,17 +85,21 @@ def mysend(s, msg):
         total_sent = total_sent + sent
 
 
-def myreceive(s, maxlen):
+def myreceive(s, maxlen=20):
     msg = bytearray()
     remaining = maxlen
     while remaining > 0:
-        chunk = s.recv(remaining)
+        chunk = s.recv(1)
         if len(chunk) == 0:
             print("empty chunk received")
         else:
             msg.extend(chunk)
+            if chunk == EOM:
+                break
+
             remaining = maxlen - len(msg)
 
+    print ("Received:", " ".join("{:02X}".format(c) for c in msg))
     return msg
 
 def test_connection(ip_address, port):
