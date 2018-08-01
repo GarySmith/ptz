@@ -98,6 +98,10 @@ class App extends Component {
       clearInterval(this.interval);
     }
     this.interval = setInterval(() => {
+      if(this.state.currentView !== 'home') {
+        // Avoid querying for presets when showing other pages
+        return;
+      }
       console.log("Polling for preset");
       doFetch('/api/current_preset', 'GET')
       .then(response => {
