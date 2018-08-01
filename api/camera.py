@@ -13,11 +13,10 @@ LOG = logging.getLogger(__name__)
 def get_position(ip_address, port):
     # Communicates with the PTZ camera and obtains its current position, which
     # is an object with the following fields, all of which are integers in the
-    # range 0-32767: zoom, focus, pan, tilt
+    # range 0-32767: zoom, pan, tilt
 
     result = {
         'zoom': 0,
-        'focus': 0,
         'pan': 0,
         'tilt': 0
     }
@@ -34,17 +33,6 @@ def get_position(ip_address, port):
         for i in range(2, 6):
             zoom = (zoom * 16) + (resp[i] & 0x0F)
         result['zoom'] = zoom
-
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((ip_address, port))
-
-        # Get FOCUS
-        mysend(s, INQ_FOCUS)
-        resp = myreceive(s)
-        focus = 0
-        for i in range(2, 6):
-            focus = (focus * 16) + (resp[i] & 0x0F)
-        result['focus'] = focus
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((ip_address, port))
