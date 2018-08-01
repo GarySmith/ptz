@@ -1,13 +1,26 @@
 from flask import Flask, jsonify, send_from_directory, request, abort
-from functools import wraps
+import logging
+import logging.handlers
 import os
 import time
 from tinydb import TinyDB, Query
 
-app = Flask(__name__)
-
 from api.auth import needs_admin, needs_user, create_token, get_token_payload
 from api import camera
+
+LOG_FILENAME = 'ptz.log'
+
+handler = logging.handlers.RotatingFileHandler(LOG_FILENAME,
+                                               maxBytes=65535,
+                                               backupCount=5)
+logging.basicConfig(level=logging.DEBUG, handlers=[handler])
+
+LOG = logging.getLogger(__name__)
+
+app = Flask(__name__)
+app.logger
+app.logger.handlers = []
+app.logger.propagate = True
 
 DB = TinyDB('settings.json')
 
@@ -153,7 +166,7 @@ def calibrate():
     for preset in presets:
         camera.recall_preset(ip, port, preset['num'])
         position = camera.get_position(ip, port)
-        print("Preset {} is at {!s}".format(preset['num'], position))
+        LOG.debug("Preset %s is at %s", preset['num'], position)
         preset.update(position)
 
     preset_tbl = DB.table('presets')
