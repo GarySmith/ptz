@@ -34,8 +34,9 @@ def get_position(ip_address, port):
         send_bytes(s, INQ_ZOOM)
         resp = receive_bytes(s)
         zoom = 0
-        for i in range(2, 6):
-            zoom = (zoom * 16) + (resp[i] & 0x0F)
+        if len(resp) > 6:
+            for i in range(2, 6):
+                zoom = (zoom * 16) + (resp[i] & 0x0F)
         result['zoom'] = zoom
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -45,13 +46,15 @@ def get_position(ip_address, port):
         send_bytes(s, INQ_PANTILT)
         resp = receive_bytes(s)
         pan = 0
-        for i in range(2, 6):
-            pan = (pan * 16) + (resp[i] & 0x0F)
+        if len(resp) > 6:
+            for i in range(2, 6):
+                pan = (pan * 16) + (resp[i] & 0x0F)
         result['pan'] = pan
 
         tilt = 0
-        for i in range(6, 10):
-            tilt = (tilt * 16) + (resp[i] & 0x0F)
+        if len(resp) > 10:
+            for i in range(6, 10):
+                tilt = (tilt * 16) + (resp[i] & 0x0F)
         result['tilt'] = tilt
 
     return result
