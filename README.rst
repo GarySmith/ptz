@@ -33,3 +33,10 @@ sudo systemctl enable ptz
 
 copy config/nginx_site to /etc/nginx/sites-available and symlink it to sites-enabled
 service reload nginx
+
+Updates
+-------
+To update the UI:
+
+- Build it as above
+- rsync --delete -av build/ pi://home/pi/ptz/ui
