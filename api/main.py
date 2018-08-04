@@ -177,8 +177,13 @@ def calibrate():
 
     return jsonify("Success")
 
-# TODO(gary): Configure apache/nginx to enable uploading and downloading files
-#             directly rather than relying on flask for this.
+# Important: In production, the web server should be considered to serve image
+# files directlry rather than calling this service.  For example, nginx can
+# handle this with the configuration:
+#   location /images/ {
+#      root /home/pi/ptz/public;
+#      try_files $uri /images/other.jpg =404;
+#   }
 @app.route("/images/<path:name>", methods=['GET'])
 def get_image_file(name):
 

@@ -1,3 +1,4 @@
 Flask>=1.0
 python-jose>=3.0 # MIT
 tinydb>=3.9
+uwsgi
