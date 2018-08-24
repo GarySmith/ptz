@@ -1,0 +1,13 @@
+[Unit]
+Description=PTZ service running under uWSGI
+After=network.target
+
+[Service]
+User=pi
+Group=www-data
+WorkingDirectory=/home/pi/ptz
+Environment="PATH=/home/pi/ptz/.tox/runserver/bin"
+ExecStart=/home/pi/ptz/.tox/runserver/bin/uwsgi --ini wsgi.ini
+
+[Install]
+WantedBy=multi-user.target

@@ -1,13 +1,28 @@
 from flask import Flask, jsonify, send_from_directory, request, abort
-from functools import wraps
+import logging
+import logging.handlers
 import os
 import time
 from tinydb import TinyDB, Query
 
-app = Flask(__name__)
-
 from api.auth import needs_admin, needs_user, create_token, get_token_payload
 from api import camera
+
+LOG_FILENAME = 'ptz.log'
+
+handler = logging.handlers.RotatingFileHandler(LOG_FILENAME,
+                                               maxBytes=65535,
+                                               backupCount=5)
+logging.basicConfig(level=logging.DEBUG, handlers=[handler])
+
+LOG = logging.getLogger(__name__)
+
+app = Flask(__name__,
+            static_url_path='',
+            static_folder='web')
+app.logger
+app.logger.handlers = []
+app.logger.propagate = True
 
 DB = TinyDB('settings.json')
 
@@ -60,6 +75,9 @@ def change_current_preset():
     Calls the camera to recall the current preset
     """
     payload = request.get_json()
+    if 'current_preset' not in payload:
+        abort(406, "current_preset missing from request")
+
     preset = int(payload.get('current_preset', 0))
     if preset < 0 or preset > 255:
         abort(406, "Invalid preset")
@@ -82,31 +100,42 @@ def get_current_preset():
     """
     camera_settings = get_camera_settings()
 
+    start_time = time.time()
+    last_position = {}
     position = camera.get_position(camera_settings['ip_address'],
                                    camera_settings['ptz_port'])
 
-    presets = DB.table('presets')
-    Preset = Query()
-    match = presets.search((Preset.zoom == position['zoom']) &
-                           (Preset.focus == position['focus']) &
-                           (Preset.pan == position['pan']) &
-                           (Preset.tilt == position['tilt']))
 
-    if (len(match) > 0):
-        return jsonify({'current_preset': match[0]['num']})
+    # Continue looping if the camera is moving and it is not at a known preset
+    while last_position != position and time.time() - start_time < 7:
 
-    # There is no direct match, so search for one that is close.  Each
-    # field is represented as a 2-byte unsigned integer, so that its
-    # value potentially ranges from 0 to 65536, but it appears that some
-    # values, especially focus and pan, only a small portion of this range.
-    # Therefore, consider a "close" value to be within +/= 5 of its target.
-    for preset in presets.all():
-        if preset['zoom'] - 5 <= position['zoom'] <= preset['zoom'] + 5 and \
-           preset['focus'] - 5 <= position['focus'] <= preset['focus'] + 5 and \
-           preset['pan'] - 5 <= position['pan'] <= preset['pan'] + 5 and \
-           preset['tilt'] - 5 <= position['tilt'] <= preset['tilt'] + 5:
+        presets = DB.table('presets')
+        Preset = Query()
+        match = presets.search((Preset.zoom == position['zoom']) &
+                            (Preset.pan == position['pan']) &
+                            (Preset.tilt == position['tilt']))
 
-            return jsonify({'current_preset': preset['num']})
+        if (len(match) > 0):
+            return jsonify({'current_preset': match[0]['num']})
+
+        # There is no direct match, so search for one that is close.  Each
+        # field is represented as a 2-byte unsigned integer, so that its
+        # value potentially ranges from 0 to 65536, but it appears that some
+        # values, especially pan, only appear in a small portion of this range.
+        # Therefore, consider a "close" value to be within +/= 5 of its target.
+        for preset in presets.all():
+            if preset['zoom'] - 5 <= position['zoom'] <= preset['zoom'] + 5 and \
+            preset['pan'] - 5 <= position['pan'] <= preset['pan'] + 5 and \
+            preset['tilt'] - 5 <= position['tilt'] <= preset['tilt'] + 5:
+
+                return jsonify({'current_preset': preset['num']})
+
+        # If the camera are not near a known preset, see whether it is actively
+        # moving.  If so, give it a little time to settle down.
+        last_position = position
+        time.sleep(0.1)
+        position = camera.get_position(camera_settings['ip_address'],
+                                    camera_settings['ptz_port'])
 
     return jsonify({'current_preset': -1})
 
@@ -139,6 +168,7 @@ def calibrate():
     for preset in presets:
         camera.recall_preset(ip, port, preset['num'])
         position = camera.get_position(ip, port)
+        LOG.debug("Preset %s is at %s", preset['num'], position)
         preset.update(position)
 
     preset_tbl = DB.table('presets')
@@ -147,13 +177,21 @@ def calibrate():
 
     return jsonify("Success")
 
-# TODO(gary): Configure apache/nginx to enable uploading and downloading files
-#             directly rather than relying on flask for this.
+# Important: In production, the web server should be considered to serve image
+# files directlry rather than calling this service.  For example, nginx can
+# handle this with the configuration:
+#   location /images/ {
+#      root /home/pi/ptz/public;
+#      try_files $uri /images/other.jpg =404;
+#   }
 @app.route("/images/<path:name>", methods=['GET'])
 def get_image_file(name):
 
     dir = os.path.normpath(os.path.join( os.getcwd(), 'public', 'images'))
-    return send_from_directory(dir, name)
+    if (os.path.isfile(os.path.join(dir, name))):
+        return send_from_directory(dir, name)
+    else:
+        return send_from_directory(dir, 'other.jpg')
 
 
 @app.route("/api/login", methods=['POST'])

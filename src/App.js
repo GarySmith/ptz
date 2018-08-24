@@ -15,7 +15,7 @@ import AddUser from './AddUser.js';
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state={
+    this.state = {
       expanded: false,
       presets : [],
       currentPreset: -1,
@@ -31,69 +31,93 @@ class App extends Component {
   }
 
   componentDidMount = () => {
-    this.loadPresets();
+    this.initialLoadPresets();
     this.checkLogin();
   }
+  componentWillUnmount = () => {
+      this.cancelPolling();
+  }
+
   presetClicked = (num) => {
     if(!this.state.validLogin) {
       return;
     }
+    this.cancelPolling();
     this.setState({currentPreset: num, pending: true});
 
-   doFetch('/api/current_preset', "POST", JSON.stringify({current_preset: num}))
-   .then(response => {
-    this.setState({pending: false});
+    doFetch('/api/current_preset', "POST", JSON.stringify({current_preset: num}))
+    .then(response => {
+      this.setState({pending: false});
+      this.startPolling();
     })
-   .catch(error => {
-     let newState = {pending: false};
-     if (error.status == 401 || error.status == 403) {
-       newState.currentView = 'login';
-       newState.validLogin = false;
-       newState.username = false;
-       newState.display_name = false;
-       newState.admin = false;
-     }
-     this.setState(newState);
-   });
+    .catch(error => {
+      let newState = {pending: false};
+      if (error.status === 401 || error.status === 403) {
+        newState.currentView = 'login';
+        newState.validLogin = false;
+        newState.username = false;
+        newState.display_name = false;
+        newState.admin = false;
+      }
+      this.setState(newState);
+    });
   }
 
   checkLogin = () => {
     const cookies = new Cookies();
     let token = cookies.get('token');
     let decode = jwt.decode(token);
-    if(token!=undefined) {
+    if(token) {
       this.onSuccess(decode.user, decode.name, decode.admin);
     }
   }
 
-  loadPresets = () => {
-    let isError=false;
+  initialLoadPresets = () => {
+    console.log("initial fetch");
     doFetch('/api/presets', 'GET')
     .then(response => {
-      this.setState({presets: response});
+      this.setState({
+        presets: response,
+        currentView: 'home',
+      });
       return doFetch('/api/current_preset', 'GET')
     })
-    .catch(error => {
-      console.log("caught error in App.js");
-      isError = true;
-    })
     .then(response => {
-      if(!isError) {
-        this.setState({currentPreset: response.current_preset});
-        this.props.setInterval(this.getCurrentPreset, 5000);
-      }
+      this.setState({currentPreset: response.current_preset});
+      console.log("Succeeded in getting current_preset, repeating every 5 seconds");
+      this.startPolling();
     })
-    this.setState({currentView: 'home'});
+    .catch(error => {
+      console.log("Unable to obtain presets");
+    })
   }
 
-  getCurrentPreset = () => {
-    console.log("preset requested");
-    doFetch('/api/current_preset', 'GET')
-    .then(response => {
-      if(this.state.currentPreset != response.current_preset) {
-        this.setState({currentPreset: response.current_preset});
+  startPolling = () => {
+    console.log('Starting polling');
+    if (this.interval) {
+      clearInterval(this.interval);
+    }
+    this.interval = setInterval(() => {
+      if(this.state.currentView !== 'home') {
+        // Avoid querying for presets when showing other pages
+        return;
       }
-    });
+      console.log("Polling for preset");
+      doFetch('/api/current_preset', 'GET')
+      .then(response => {
+        console.log("Current preset: " + response.current_preset);
+        this.setState({currentPreset: response.current_preset});
+      })
+      .catch(error => {
+        console.log("Cancelling polling. Error polling for current position " + error);
+        this.cancelPolling();
+      });
+    }, 5000);
+  }
+
+  cancelPolling = () => {
+    console.log('Cancelling polling');
+    clearInterval(this.interval);
   }
 
   onSuccess = (username, display_name, admin) => {
@@ -160,10 +184,11 @@ class App extends Component {
       credentialsMenu = (<Login onSuccess={this.onSuccess}/>);
     }
     else if(this.state.currentView==="settings") { //change Address class to Settings
-      settingsMenu = (<Address onComplete={this.loadPresets}/>); //only admin
+      // TODO: This looks problematic. It may possibly trigger multiple timers
+      settingsMenu = (<Address onComplete={this.initialLoadPresets}/>); //only admin
     }
     else if(this.state.currentView==='calibrate') {
-      calibrateMenu = (<Calibrate num_presets={presets_len} admin={this.state.admin} onComplete={this.loadPresets}/>);  //only admin
+      calibrateMenu = (<Calibrate num_presets={presets_len} admin={this.state.admin} onComplete={this.initialLoadPresets}/>);  //only admin
     }
     else if(this.state.currentView==='update') {
       updateMenu = (<Update admin={this.state.admin}/>);  //only admin
@@ -179,7 +204,6 @@ class App extends Component {
     if(this.state.validLogin) {
       welcomeMessage = "Hello, " + this.state.display_name;
     }
-
     let userOptions = "options hidden";
     let adminOptions= "options hidden";
     let loginView = "options";
@@ -187,8 +211,8 @@ class App extends Component {
       adminOptions="options";
     }
     if(this.state.validLogin) {
-      userOptions = "options";
       loginView = "options hidden";
+      userOptions= "options";
     }
     return (
       <div>

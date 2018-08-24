@@ -1,6 +1,9 @@
 from flask import request, abort
 from functools import wraps
+import logging
 from jose import jwt
+
+LOG = logging.getLogger(__name__)
 
 def needs_user():
     """
@@ -48,7 +51,7 @@ def get_secret():
     global SECRET
     if not SECRET:
         try:
-            print("loading secret.txt")
+            LOG.debug("loading secret.txt")
             with open('secret.txt') as f:
                 SECRET = f.readline()
 
@@ -57,13 +60,13 @@ def get_secret():
             import uuid
             SECRET = uuid.uuid4().hex
             try:
-                print("Creating new secret.txt")
+                LOG.info("Creating new secret.txt")
                 with open('secret.txt','w') as f:
                     f.write(SECRET)
 
             except IOError:
-                print('Unable to save secret file. All sessions will ' +
-                        'become invalid when the service restarts')
+                LOG.error('Unable to save secret file. All sessions will ' +
+                          'become invalid when the service restarts')
                 pass
     return SECRET
 
@@ -75,7 +78,7 @@ def get_token_payload(token):
     try:
         return jwt.decode(token, get_secret(), audience=AUDIENCE)
     except Exception as e:
-        print("Token invalid: ", e)
+        LOG.exception("Token invalid", exc_info=e)
 
 
 def create_token(user, display_name='', admin=False):

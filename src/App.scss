@@ -296,18 +296,8 @@ slider::-moz-range-thumb {
       width: 100%;
     }
   }
-  .sidenav a {font-size: 18px;}
 
-  /*
-  .imgCol {
-    display: inline-block;
-    padding: 10px;
-    position: relative;
-  }
-  */
   .imgRow {
-    display: inline-block;
-    text-align: left;
     padding: 0px;
     &.viewDiv {
       margin-left: -50%;
@@ -315,62 +305,26 @@ slider::-moz-range-thumb {
       padding: 5px;
     }
   }
-  .presetImgs {
-    border: 3px solid white;
-    border-radius: 4px;
-    padding: 5px;
-
-    &.selectedImg {
-      border: 3px solid blue;
-    }
-   }
   .header {
     font-size: 25px;
     margin-bottom: 20px;
   }
   .title {
     font-size: 20px;
-    line-height: 50px;
-    padding-bottom: 10px;
-  }
-  span {
-    /*font-size: 15px;*/
   }
   .logout {
       position: relative;
+      left: 90%;
       font-size: 30px;
       top: -10px;
-      left: 90%;
-      color: lightgray;
-      width: 5%;
 
-    &:hover {
-      color: white;
-      cursor: pointer;
-    }
     &.hidden {
       display: none;
-    }
-  }
-  .dropDown {
-    &.hidden {
-       background-color: inherit;
     }
   }
 
   .dropOption {
     position: relative;
-    padding: 5px;
-    &:hover {
-      background-color: lightgray;
-      cursor: pointer;
-    }
-    &.hidden {
-      display: none;
-    }
-    &.disable {
-      cursor: not-allowed;
-    }
   }
   .welcomeMessage {
     display: none;
