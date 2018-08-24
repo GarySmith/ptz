@@ -55,7 +55,7 @@ class Address extends Component {
     return (
       <div>
         <div className="header">Settings</div>
-        <form>
+        <form className="settingsForm">
           <FormGroup controlId="cameraIPAddress" validationState={this.state.addressValid ? 'success' : 'error'}>
             <ControlLabel>IP Address</ControlLabel>
             <FormControl type="text" size="15" maxLength="15" value={this.state.addressInput} onChange={this.updateAddressInput}/>

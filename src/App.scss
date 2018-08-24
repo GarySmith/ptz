@@ -16,7 +16,11 @@ body {
 .form-control {
   /*width: auto;*/
 }
+.settingsForm {
+  width: 30%;
+  margin: auto;
 
+}
 .hamburger {
   color: white;
   font-size: 25px;
@@ -373,5 +377,8 @@ slider::-moz-range-thumb {
   }
   .addUser {
     width: 350px;
+  }
+  .usermenu {
+    display: none;
   }
 }

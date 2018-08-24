@@ -123,18 +123,9 @@ class App extends Component {
     let homeMenu;
     let aboutMenu;
     let presets_len = this.state.presets.length;
-    let dropClass = "dropDown hidden";
-    let dropOption = "dropOption hidden";
     let manageAccount;
     let addUser;
 
-    if(this.state.dropDown) {
-      dropClass = "dropDown";
-      dropOption = "dropOption";
-      if(!this.state.validLogin) {
-        dropOption= "dropOption disable";
-      }
-    }
     if(this.state.currentView==='home') {
       const buttons = this.state.presets.map(e => {
         let cls="presetImgs";
@@ -210,15 +201,15 @@ class App extends Component {
             <div className={adminOptions} onClick={()=> this.sideButtonClicked("update")}>Update/Upload Image</div>
             <div className="options" onClick={()=> this.sideButtonClicked("about")}>About</div>
             <div className={loginView} onClick={()=> this.sideButtonClicked("login")}>Login</div>
+
+            <div className={userOptions} onClick={()=> this.sideButtonClicked("manageAccount")}>Manage Account</div>
+            <div className={adminOptions} onClick={()=> this.sideButtonClicked("addUser")}>Add User</div>
+            <div className={userOptions} onClick={()=> this.logoutClicked()}>Logout</div>
+
           </div>
           <span className="hamburger" onClick={(e) => this.openNav(e)}>&#9776;</span>
           <div className="title">PTZ Cam App</div>
           <div className="usermenu" onClick={this.iconClicked}>{welcomeMessage}</div>
-          <div className={dropClass}>
-            <div className={dropOption} onClick={() => this.dropOptionClicked('manageAccount')}>Manage Account</div>
-            <div className={dropOption} onClick={() => this.dropOptionClicked('addUser')}>Add Users</div>
-            <div className={dropOption} onClick={this.logoutClicked}>Logout</div>
-          </div>
         </div>
         <div className="middleView">
           {homeMenu}
@@ -256,10 +247,6 @@ iconClicked = () => {
   sideButtonClicked(str) {
     this.closeNav();
     this.setState({currentView:str});
-  }
-
-  dropOptionClicked = (str) => {
-    this.setState({currentView: str});
   }
 }
 export default ReactTimeout(App);
