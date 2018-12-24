@@ -1,13 +1,9 @@
 import React, { Component } from 'react';
-import Cookies from 'universal-cookie';
-import jwt from 'jsonwebtoken';
-import { doFetch } from './RestUtils.js';
+//import { doFetch } from './RestUtils.js';
 import { FormGroup } from 'react-bootstrap';
 import { FormControl } from 'react-bootstrap';
 import { ControlLabel } from 'react-bootstrap';
-import { HelpBlock } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
-import { Checkbox } from 'react-bootstrap';
 
 class ManageAccount extends Component {
   constructor(props) {
@@ -66,8 +62,8 @@ class ManageAccount extends Component {
     }
     else {
       len=this.state.passConfirm.length;
-      if(len==0) { return null; }
-      else if(len!=this.state.password.length) { return 'error'; }
+      if(len===0) { return null; }
+      else if(len!==this.state.password.length) { return 'error'; }
     }
     if(len > 2) {
       return 'success';
