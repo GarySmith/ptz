@@ -5,6 +5,7 @@ from jose import jwt
 
 LOG = logging.getLogger(__name__)
 
+
 def needs_user():
     """
     Decorator to require that a valid user token be included with the cookies
@@ -22,6 +23,7 @@ def needs_user():
         return wrapper
 
     return decorator
+
 
 def needs_admin():
     """
@@ -47,6 +49,8 @@ def needs_admin():
 
 
 SECRET = None
+
+
 def get_secret():
     global SECRET
     if not SECRET:
@@ -61,7 +65,7 @@ def get_secret():
             SECRET = uuid.uuid4().hex
             try:
                 LOG.info("Creating new secret.txt")
-                with open('secret.txt','w') as f:
+                with open('secret.txt', 'w') as f:
                     f.write(SECRET)
 
             except IOError:

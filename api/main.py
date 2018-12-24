@@ -31,6 +31,8 @@ DEFAULT_IP_ADDRESS = "192.168.100.88"
 DEFAULT_PTZ_PORT = 5678
 
 # Create an error handler that returns json
+
+
 @app.errorhandler(401)
 @app.errorhandler(403)
 @app.errorhandler(404)
@@ -105,15 +107,14 @@ def get_current_preset():
     position = camera.get_position(camera_settings['ip_address'],
                                    camera_settings['ptz_port'])
 
-
     # Continue looping if the camera is moving and it is not at a known preset
     while last_position != position and time.time() - start_time < 7:
 
         presets = DB.table('presets')
         Preset = Query()
         match = presets.search((Preset.zoom == position['zoom']) &
-                            (Preset.pan == position['pan']) &
-                            (Preset.tilt == position['tilt']))
+                               (Preset.pan == position['pan']) &
+                               (Preset.tilt == position['tilt']))
 
         if (len(match) > 0):
             return jsonify({'current_preset': match[0]['num']})
@@ -124,9 +125,9 @@ def get_current_preset():
         # values, especially pan, only appear in a small portion of this range.
         # Therefore, consider a "close" value to be within +/= 5 of its target.
         for preset in presets.all():
-            if preset['zoom'] - 5 <= position['zoom'] <= preset['zoom'] + 5 and \
-            preset['pan'] - 5 <= position['pan'] <= preset['pan'] + 5 and \
-            preset['tilt'] - 5 <= position['tilt'] <= preset['tilt'] + 5:
+            if preset['zoom']-5 <= position['zoom'] <= preset['zoom']+5 and \
+               preset['pan']-5 <= position['pan'] <= preset['pan']+5 and \
+               preset['tilt']-5 <= position['tilt'] <= preset['tilt']+5:
 
                 return jsonify({'current_preset': preset['num']})
 
@@ -135,7 +136,7 @@ def get_current_preset():
         last_position = position
         time.sleep(0.1)
         position = camera.get_position(camera_settings['ip_address'],
-                                    camera_settings['ptz_port'])
+                                       camera_settings['ptz_port'])
 
     return jsonify({'current_preset': -1})
 
@@ -159,7 +160,7 @@ def calibrate():
     # Create a new, ordered, empty sets of presets
     for num in range(1, max_presets+1):
         presets.append({'num': num,
-                        'image_url': '/images/{0}.jpg'.format(num) })
+                        'image_url': '/images/{0}.jpg'.format(num)})
 
     camera_settings = get_camera_settings()
     ip = camera_settings['ip_address']
@@ -184,10 +185,12 @@ def calibrate():
 #      root /home/pi/ptz/public;
 #      try_files $uri /images/other.jpg =404;
 #   }
+
+
 @app.route("/images/<path:name>", methods=['GET'])
 def get_image_file(name):
 
-    dir = os.path.normpath(os.path.join( os.getcwd(), 'public', 'images'))
+    dir = os.path.normpath(os.path.join(os.getcwd(), 'public', 'images'))
     if (os.path.isfile(os.path.join(dir, name))):
         return send_from_directory(dir, name)
     else:
@@ -276,7 +279,7 @@ def delete_user(user):
 def get_all_users():
 
     accounts = DB.table('accounts')
-    User = Query()
+    # User = Query()
     all_users = [user['username'] for user in accounts.all()]
     return jsonify(all_users)
 

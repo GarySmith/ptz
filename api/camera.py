@@ -2,11 +2,11 @@ import socket
 import time
 
 
-INQ_FOCUS = bytes([ 0x81, 0x09, 0x04, 0x48, 0xFF ])
-INQ_ZOOM = bytes([ 0x81, 0x09, 0x04, 0x47, 0xFF ])
-INQ_PANTILT = bytes([ 0x81, 0x09, 0x06, 0x12, 0xFF ])
-RECALL_PRESET = bytes([ 0x81, 0x01, 0x04, 0x3F, 0x02, 0x00, 0xFF ])
-EOM = bytes([ 0xFF ])
+INQ_FOCUS = bytes([0x81, 0x09, 0x04, 0x48, 0xFF])
+INQ_ZOOM = bytes([0x81, 0x09, 0x04, 0x47, 0xFF])
+INQ_PANTILT = bytes([0x81, 0x09, 0x06, 0x12, 0xFF])
+RECALL_PRESET = bytes([0x81, 0x01, 0x04, 0x3F, 0x02, 0x00, 0xFF])
+EOM = bytes([0xFF])
 
 # Enable debugging the network traffice with print statements.  These
 # give a real-time, digestible format for logging, as opposed to logging
@@ -59,6 +59,7 @@ def get_position(ip_address, port):
 
     return result
 
+
 def recall_preset(ip_address, port, preset):
 
     req = RECALL_PRESET[0:5] + bytes([preset]) + RECALL_PRESET[6:7]
@@ -67,7 +68,7 @@ def recall_preset(ip_address, port, preset):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((ip_address, port))
         send_bytes(s, req)
-        resp = receive_bytes(s)
+        receive_bytes(s)
 
     last_pos = {}
     current_pos = get_position(ip_address, port)
@@ -79,7 +80,7 @@ def recall_preset(ip_address, port, preset):
 
 
 def send_bytes(s, msg):
-    debug_print ("Sent    : ", end="")
+    debug_print("Sent    : ", end="")
     total_sent = 0
     to_send = len(msg)
     while total_sent < to_send:
@@ -97,7 +98,7 @@ def send_bytes(s, msg):
 def receive_bytes(s, maxlen=20):
     msg = bytearray()
     remaining = maxlen
-    debug_print("Received: ",end="")
+    debug_print("Received: ", end="")
     while remaining > 0:
         chunk = s.recv(1)
         if len(chunk) == 0:
@@ -114,6 +115,7 @@ def receive_bytes(s, maxlen=20):
     debug_print()
     return msg
 
+
 def test_connection(ip_address, port):
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -123,6 +125,7 @@ def test_connection(ip_address, port):
         return True
     except socket.error as e:
         pass
+
 
 def debug_print(msg=None, end='\n'):
 
