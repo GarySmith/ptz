@@ -85,12 +85,13 @@ def get_token_payload(token):
         LOG.exception("Token invalid", exc_info=e)
 
 
-def create_token(user, display_name='', admin=False):
+def create_token(user, display_name='', admin=False, expiration=None):
     payload = {
         'user': user,
         'name': display_name,
         'admin': admin,
-        'aud': AUDIENCE,
-        # 'exp': int(time.time()) + 30,  # for testing expirate times
+        'aud': AUDIENCE
     }
+    if expiration:
+        payload['exp'] = expiration
     return jwt.encode(payload, get_secret(), algorithm='HS256')

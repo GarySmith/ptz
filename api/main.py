@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, send_from_directory, request, abort
+import datetime
 import logging
 import logging.handlers
 import os
@@ -212,13 +213,15 @@ def login():
         if acct['password'] == password:
             is_admin = acct['admin']
             display_name = acct['display_name']
-            token = create_token(username, display_name, is_admin)
+            exp_time = time.time() + \
+                datetime.timedelta(days=365).total_seconds()
+            token = create_token(username, display_name, is_admin, exp_time)
             response = jsonify({
                 'display_name': display_name,
                 'admin': is_admin,
                 'token': token,
             })
-            response.set_cookie('token', value=token)
+            response.set_cookie('token', value=token, expires=exp_time)
             return response
 
     abort(401, 'Invalid credentials')
