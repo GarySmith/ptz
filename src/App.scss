@@ -135,6 +135,9 @@ body {
   }
   &.selectedImg {
     border: 3px solid blue;
+    &.viewOnly {
+      border: 3px solid silver;
+    }
   }
   &.pending {
     animation: blink .1s step-end infinite alternate;

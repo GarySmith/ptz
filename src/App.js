@@ -159,6 +159,10 @@ class App extends Component {
           } else {
             cls+= " selectedImg";
           }
+          if(!this.state.validLogin) {
+            cls+= " viewOnly";
+          }
+
         }
         return (
         <div key={e.num} className='imgRow'>
