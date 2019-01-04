@@ -34,9 +34,11 @@ Production installations
 Install `nginx`, `npm`, `uwsgi`.
 
 Follow the notes here: https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-uwsgi-and-nginx-on-ubuntu-16-04
-sudo cp config/ptz.service to /etc/systemd/system
-sudo systemctl start ptz
-sudo systemctl enable ptz
+Then::
+
+  sudo cp config/ptz.service to /etc/systemd/system
+  sudo systemctl start ptz
+  sudo systemctl enable ptz
 
 copy config/nginx_site to /etc/nginx/sites-available and symlink it to sites-enabled
 service reload nginx
@@ -45,8 +47,13 @@ Updates
 -------
 To update the UI:
 
-- Build it as above
+- Build it on a development system as above
 - rsync --delete -av build/ pi://home/pi/ptz/ui
+
+To update the service::
+
+  git pull
+  sudo systemctl restart ptz
 
 Presets
 -------
