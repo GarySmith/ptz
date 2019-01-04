@@ -10,6 +10,13 @@ Start the service listening on port 5100 with::
 
    tox
 
+Start the UI listening on port 3000 with::
+
+   yarn install && yarn start
+
+The `/api` `target` entry in package.json controls where the
+UI will connect to, and shouldd be set to `http://localhost:5100` for
+local development.
 
 Build
 -----
