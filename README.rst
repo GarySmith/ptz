@@ -47,3 +47,15 @@ To update the UI:
 
 - Build it as above
 - rsync --delete -av build/ pi://home/pi/ptz/ui
+
+Presets
+-------
+The PTZ camera has an annoying property whereby the presets that are managed via
+the hand-held remote control are entirely separate from those managed via its
+API.  This becomes problematic if the presets are not kept in sync and the
+handheld remote is used to control the camera.  Therefore it is advised to keep
+them in sync.  The easiest way to do this is to always make changes to preset
+positions first using the hand-held remote.  After all changes are made, login
+to the camera's web page and for each preset on the remote, press the remote
+button to move the camera, and then update the corresponding preset on the web
+page.
