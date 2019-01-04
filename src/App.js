@@ -236,7 +236,7 @@ class App extends Component {
 
           </div>
           <span className="hamburger" onClick={(e) => this.openNav(e)}>&#9776;</span>
-          <div className="title">PTZ Cam App</div>
+          <div className="title">PTZ Camera Control</div>
           <div className="usermenu" onClick={this.iconClicked}>{welcomeMessage}</div>
         </div>
         <div className="middleView">
