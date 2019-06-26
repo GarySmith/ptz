@@ -14,17 +14,19 @@ class ManageAccount extends Component {
     super(props);
     this.state={
       username: '',
-      oldPass: '',
       password: '',
       passConfirm: '',
+      isAdmin : false,
     };
   }
 
+  componentDidMount = () => {
+    if(this.props.admin) {
+     this.setState({isAdmin: true});
+    }
+  }
   updateUser(evt) {
     this.setState({username : evt.target.value});
-  }
-  updateOldPass(evt) {
-    this.setState({oldPass : evt.target.value});
   }
   updatePassword(evt) {
     this.setState({password : evt.target.value});
@@ -34,32 +36,40 @@ class ManageAccount extends Component {
   }
   submitClicked = (evt) => {
   //fix submit!!
-  /*
-    if(this.state.username.length<3 || this.state.displayname.length<3 || this.state.password.length<3) {
+  
+    if((this.state.isAdmin && this.state.username.length<3) || this.state.password.length<3 || this.state.passConfirm<3) {
       this.setState({errorMessage: "Please make sure all entries are at least 3 characters long"});
     }
     else if(this.state.passConfirm!=this.state.password) {
       this.setState({errorMessage: "Passwords don't match"});
-    }
+    } //confirming old password???
     else {
-      const body = JSON.stringify({username: this.state.username,
-        password: this.state.password, admin: this.state.admin, display_name: this.state.displayname});
-      doFetch('api/users', 'POST', body)
-        .then(response => {
-          this.setState({errorMessage: 'User added successfully!'});
-        })
-        .catch((error) => {
-          this.setState({errorMessage: 'Failed to add user'});
-        })
-    }*/
+      if(this.state.isAdmin) {
+        const body = JSON.stringify({password: this.state.password});
+        doFetch('api/users/' + this.state.username + '/password', 'POST', body)
+            .then(response => {
+            this.setState({errorMessage: 'Changed password successfully for ' + this.state.username + '!'});
+            })
+            .catch((error) => {
+            this.setState({errorMessage: 'Failed to change password'});
+            }) 
+      }
+      else {
+        const body = JSON.stringify({password: this.state.password});
+        doFetch('api/password', 'POST', body)
+            .then(response => {
+            this.setState({errorMessage: 'Changed password successfully!'});
+            })
+            .catch((error) => {
+            this.setState({errorMessage: 'Failed to change password'});
+            }) 
+      }
+    }
   }
   getValidationState = (str) => {
     let len;
     if(str==="username") {
       len = this.state.username.length;
-    }
-    else if(str==="oldPass") {
-      len=this.state.oldPass.length;
     }
     else if(str==="password") {
       len=this.state.password.length;
@@ -76,18 +86,20 @@ class ManageAccount extends Component {
   }
   render() {
     let messageClass='';
+    let userTextBox;
+    let userLabel;
+    if(this.state.isAdmin) {
+        userTextBox = 
+          <FormControl type="text" value={this.state.username} placeholder="Enter username" onChange={this.updateUser.bind(this)} />
+        userLabel = <ControlLabel>Username</ControlLabel>
+    }
     return (
       <div className="addUser">
         <div className="header">Manage Account</div>
         <form onSubmit={this.submitClicked}>
           <FormGroup controlId="formBasicText" validationState={this.getValidationState("username")}>
-            <ControlLabel>Username</ControlLabel>
-            <FormControl type="text" value={this.state.username} placeholder="Enter username" onChange={this.updateUser.bind(this)} />
-            <FormControl.Feedback />
-          </FormGroup>
-          <FormGroup controlId="formBasicText" validationState={this.getValidationState("oldPass")}>
-            <ControlLabel>Old Password</ControlLabel>
-            <FormControl type="text" value={this.state.oldPass} placeholder="Enter old password" onChange={this.updateOldPass.bind(this)} />
+            {userLabel}
+            {userTextBox}
             <FormControl.Feedback />
           </FormGroup>
           <FormGroup controlId="formBasicText" validationState={this.getValidationState("password")}>

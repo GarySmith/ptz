@@ -16,6 +16,7 @@ class AddUser extends Component {
       passConfirm: '',
       errorMessage: '',
       admin: false,
+      userToDelete: '',
     };
   }
   updateUser(evt) {
@@ -29,6 +30,9 @@ class AddUser extends Component {
   }
   updatePassConfirm(evt) {
     this.setState({passConfirm : evt.target.value});
+  }
+  updateUserDelete(evt) {
+    this.setState({userToDelete : evt.target.value});
   }
   submitClicked = (evt) => {
     if(this.state.username.length<3 || this.state.displayname.length<3 || this.state.password.length<3) {
@@ -49,16 +53,30 @@ class AddUser extends Component {
         })
     }
   }
+  deleteUser = (evt) => {
+     const body = JSON.stringify({username: this.state.username});
+     doFetch('api/users/' + this.state.userToDelete, 'DELETE', body)
+        .then(response => {
+          this.setState({errorMessage: 'User deleted successfully!'});
+        })
+        .catch((error) => {
+          this.setState({errorMessage: 'Failed to delete user'});
+        })
+   }
+  
   getValidationState = (str) => {
     let len;
-    if(str==="username") {
+    if(str === "username") {
       len = this.state.username.length;
     }
-    else if(str==="display") {
+    else if(str === "display") {
       len=this.state.displayname.length;
     }
-    else if(str==="password") {
+    else if(str === "password") {
       len=this.state.password.length;
+    }
+    else if(str === "usernameDelete") {
+        len=this.state.userToDelete.length;
     }
     else {
       len=this.state.passConfirm.length;
@@ -116,6 +134,15 @@ class AddUser extends Component {
               <Button bsStyle="success" onClick={this.submitClicked}>Submit</Button>
             </form>
             <div className={messageClass}>{this.state.errorMessage}</div>
+            <div className="header">Delete Users</div>
+            <form onSubmit={this.deleteUser}>  
+              <FormGroup controlId="formBasicText" validationState={this.getValidationState("usernameDelete")}>
+                <ControlLabel>Username</ControlLabel>
+                <FormControl type="text" value={this.state.userToDelete} placeholder="Enter username" onChange={this.updateUserDelete.bind(this)} />
+                <FormControl.Feedback />
+              </FormGroup>
+             <Button bsStyle="success" onClick={this.deleteUser}>Submit</Button>
+            </form>
         </div>
       );
     }
