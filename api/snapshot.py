@@ -1,5 +1,4 @@
 import ipaddress
-import os
 import platform
 import tempfile
 import time
@@ -66,6 +65,9 @@ def take_snapshot(host_or_ip, share, rc_port):
 
     host, ip_addr = get_host_ip(host_or_ip)
 
+    if not vlc.is_playing(ip_addr, rc_port):
+        raise Exception('VLC is not playing')
+
     # Connect to vlc and issue snapshot command
     vlc.take_snapshot(ip_addr, rc_port)
 
@@ -92,14 +94,11 @@ def take_snapshot(host_or_ip, share, rc_port):
     if not (file_lower.endswith('.jpg') or file_lower.endswith('.jpeg')):
         raise Exception('The newest file is not a snapshot')
 
-    with tempfile.NamedTemporaryFile(delete=False) as fp:
+    with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as fp:
         filename = fp.name
         attributes, size = conn.retrieveFile(share, file.filename, fp)
 
-    new_filename = filename + '.jpg'
-    os.rename(filename, new_filename)
-
-    return new_filename
+    return filename
 
 
 # filename = take_snapshot('192.168.1.2', 'scans', 4200)

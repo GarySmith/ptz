@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, send_from_directory, request, abort
+from flask import Flask, jsonify, send_from_directory, send_file, \
+    request, abort
 import datetime
 import logging
 import logging.handlers
@@ -380,12 +381,15 @@ def is_playing():
                                   vlc_settings['rc_port']))
 
 
-@app.route("/api/vlc/snapshot", methods=['POST'])
+@app.route("/api/vlc/snapshot", methods=['GET'])
 @needs_admin()
 def take_snapshot():
 
     vlc_settings = get_vlc_settings()
 
-    return jsonify(snapshot.take_snapshot(vlc_settings['ip_address'],
-                                          vlc_settings['share'],
-                                          vlc_settings['rc_port']))
+    try:
+        return send_file(snapshot.take_snapshot(vlc_settings['ip_address'],
+                                                vlc_settings['share'],
+                                                vlc_settings['rc_port']))
+    except Exception as e:
+        abort(500, str(e))
