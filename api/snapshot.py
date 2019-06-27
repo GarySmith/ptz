@@ -1,10 +1,12 @@
 import ipaddress
+import os
 import platform
 import tempfile
 import time
 from smb.SMBConnection import SMBConnection
 from smb import smb_constants as smbc
 from nmb.NetBIOS import NetBIOS
+from . import vlc
 
 # Prerequisites:
 # - Create a new directory for snapshots, and share it (over SMB/Windows
@@ -64,7 +66,8 @@ def take_snapshot(host_or_ip, share, rc_port):
 
     host, ip_addr = get_host_ip(host_or_ip)
 
-    # TODO: Connect to RC and issue snapshot command
+    # Connect to vlc and issue snapshot command
+    vlc.take_snapshot(ip_addr, rc_port)
 
     conn = SMBConnection('', '', platform.node(), host)
     assert conn.connect(ip_addr)
@@ -93,7 +96,10 @@ def take_snapshot(host_or_ip, share, rc_port):
         filename = fp.name
         attributes, size = conn.retrieveFile(share, file.filename, fp)
 
-    return filename
+    new_filename = filename + '.jpg'
+    os.rename(filename, new_filename)
+
+    return new_filename
 
 
 # filename = take_snapshot('192.168.1.2', 'scans', 4200)

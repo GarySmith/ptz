@@ -8,6 +8,7 @@ from tinydb import TinyDB, Query
 
 from api.auth import needs_admin, needs_user, create_token, get_token_payload
 from api import camera
+from api import snapshot
 from api import vlc
 
 LOG_FILENAME = 'ptz.log'
@@ -377,3 +378,14 @@ def is_playing():
 
     return jsonify(vlc.is_playing(vlc_settings['ip_address'],
                                   vlc_settings['rc_port']))
+
+
+@app.route("/api/vlc/snapshot", methods=['POST'])
+@needs_admin()
+def take_snapshot():
+
+    vlc_settings = get_vlc_settings()
+
+    return jsonify(snapshot.take_snapshot(vlc_settings['ip_address'],
+                                          vlc_settings['share'],
+                                          vlc_settings['rc_port']))
