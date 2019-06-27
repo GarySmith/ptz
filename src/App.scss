@@ -1,7 +1,6 @@
 @import url('https://fonts.googleapis.com/css?family=Advent+Pro');
 body {
     font-family: "Lato", sans-serif;
-   /* font-family: 'Advent Pro';*/
 }
 
 .error {
@@ -29,6 +28,9 @@ body {
   position: absolute;
   top: 0px;
   line-height: 50px;
+}
+.camera {
+  cursor: pointer;
 }
 .about {
   display: initial;

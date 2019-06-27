@@ -195,8 +195,8 @@ def calibrate():
 
     return jsonify("Success")
 
-# Important: In production, the web server should be considered to serve image
-# files directlry rather than calling this service.  For example, nginx can
+# Important: In production, the web server should be configured to serve image
+# files directly rather than calling this service.  For example, nginx can
 # handle this with the configuration:
 #   location /images/ {
 #      root /home/pi/ptz/public;
@@ -383,7 +383,6 @@ def is_playing():
 
 
 @app.route("/api/vlc/snapshot", methods=['GET'])
-@needs_admin()
 def take_snapshot():
 
     vlc_settings = get_vlc_settings()

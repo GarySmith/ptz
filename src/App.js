@@ -11,6 +11,7 @@ import { doFetch } from './RestUtils.js';
 import ReactTimeout from 'react-timeout';
 import ManageAccount from './ManageAccount.js';
 import AddUser from './AddUser.js';
+import MaterialIcon from 'material-icons-react';
 
 class App extends Component {
   constructor(props) {
@@ -27,6 +28,7 @@ class App extends Component {
       admin: false,
       display_name: '',
       dropDown: false,
+      showSnapshot: false,
     };
   }
 
@@ -36,6 +38,16 @@ class App extends Component {
   }
   componentWillUnmount = () => {
       this.cancelPolling();
+  }
+
+  takeSnapshot = () => {
+    this.setState({showSnapshot: true});
+    if (this.snapshotTimer) {
+      clearTimeout(this.snapshotTimer);
+    }
+    this.snapshotTimer = setTimeout(() => {
+      this.setState({showSnapshot: false});
+    }, 1000);
   }
 
   presetClicked = (num) => {
@@ -173,12 +185,27 @@ class App extends Component {
         </div>
       )
       });
+      let img;
+      if (this.state.showSnapshot) {
+        // Use a unique query parameter so that the browser always
+        // makes the query rather than serving up an old cached image
+        const timestamp = new Date().getTime();
+        img = (<img src={"/api/vlc/snapshot?t" + timestamp}/>);
+      }
       homeMenu = (
-          <center>
-          <div>
-              {buttons}
-           </div>
-          </center>
+          <React.Fragment>
+            <center>
+              <div>
+                {buttons}
+              </div>
+            </center>
+            <div>
+              <span className='camera'>
+                <MaterialIcon icon="photo_camera" size='large' onClick={() => this.takeSnapshot()}/>
+              </span>
+              {img}
+            </div>
+          </React.Fragment>
       );
     }
     else if(this.state.currentView==="about") {
