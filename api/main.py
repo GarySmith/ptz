@@ -8,6 +8,7 @@ from tinydb import TinyDB, Query
 
 from api.auth import needs_admin, needs_user, create_token, get_token_payload
 from api import camera
+from api import vlc
 
 LOG_FILENAME = 'ptz.log'
 
@@ -68,6 +69,18 @@ def get_camera_settings():
         camera.insert({'ip_address': DEFAULT_IP_ADDRESS,
                        'ptz_port': DEFAULT_PTZ_PORT})
 
+    return settings[0]
+
+
+def get_vlc_settings():
+
+    vlc = DB.table('vlc')
+    settings = vlc.all()
+    if (len(settings) < 1):
+        vlc.insert({'host': 'gary-laptop',
+                    'ip_address': '192.168.1.2',
+                    'rc_port': 4200,
+                    'share': 'scans'})
     return settings[0]
 
 
@@ -349,7 +362,18 @@ def update_camera_settings():
     return jsonify("Success")
 
 
-# TODO(gary) Need apis for:
-#   Uploading an image for a given preset
-#   Power on/off camera
-#   Other settings (eventually)
+@app.route("/api/vlc", methods=['GET'])
+@needs_admin()
+def get_vlc():
+
+    return jsonify(get_vlc_settings())
+
+
+@app.route("/api/vlc/is_playing", methods=['GET'])
+@needs_admin()
+def is_playing():
+
+    vlc_settings = get_vlc_settings()
+
+    return jsonify(vlc.is_playing(vlc_settings['ip_address'],
+                                  vlc_settings['rc_port']))

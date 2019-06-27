@@ -11,6 +11,8 @@ from nmb.NetBIOS import NetBIOS
 #   sharing) without password
 # - enable the remote control interface in VLS (launch with vlc --intf rc, or
 #   Preferences > Interface > Main interfaces > Remote control interface
+# - Allocate a fake TTY
+#   Preferences > Interface > Main interfaces > RC > Fake TTY
 # - Assign a port to the RC interface
 #   Preferences > Interface > Main interfaces > RC > TCP command input
 #    e.g. 0.0.0.0:4200
@@ -94,5 +96,5 @@ def take_snapshot(host_or_ip, share, rc_port):
     return filename
 
 
-filename = take_snapshot('192.168.1.2', 'scans', 4200)
-print(filename)
+# filename = take_snapshot('192.168.1.2', 'scans', 4200)
+# print(filename)
