@@ -13,6 +13,9 @@ class ManageAccount extends Component {
       password: '',
       passConfirm: '',
       isAdmin : false,
+      userRole: '',
+      errorMessage: '',
+      hasSearchedUser : false,
     };
   }
 
@@ -30,9 +33,10 @@ class ManageAccount extends Component {
   updatePassConfirm(evt) {
     this.setState({passConfirm : evt.target.value});
   }
+  updateUserRole(evt) {
+    this.setState({userRole : evt.target.value});
+  }
   submitClicked = (evt) => {
-  //fix submit!!
-
     if((this.state.isAdmin && this.state.username.length<3) || this.state.password.length<3 || this.state.passConfirm<3) {
       this.setState({errorMessage: "Please make sure all entries are at least 3 characters long"});
     }
@@ -70,28 +74,61 @@ class ManageAccount extends Component {
     else if(str==="password") {
       len=this.state.password.length;
     }
+    else if(str==="userRole") {
+        len = this.state.userRole.length;
+    }
     else {
       len=this.state.passConfirm.length;
       if(len===0) { return null; }
-      else if(len!==this.state.password.length) { return 'error'; }
+      else if(len!==this.state.password.length || this.state.password!==this.state.passConfirm) { return 'error'; }
     }
     if(len > 2) {
       return 'success';
     } else if(len > 0) { return 'error';}
      return null;
   }
+  roleChangeClicked = (evt) => {
+     const body = JSON.stringify({user: this.state.userRole});
+     doFetch('api/users/' + this.state.userRole + '/settings', 'POST', body)
+        .then(response => {
+          this.setState({errorMessage: 'Changed settings successfully for ' + this.state.userRole + '!'});
+         })
+        .catch((error) => {
+          this.setState({errorMessage: 'Failed to change settings'});
+        })
+  }
+    
+  searchClicked = (evt) => {
+
+  }
+
   render() {
     let messageClass='';
     let userTextBox;
     let userLabel;
+    let changeRoleDiv;
+    let changeRoleLabel = "";
+    let searchUserButton;
     if(this.state.isAdmin) {
         userTextBox =
           <FormControl type="text" value={this.state.username} placeholder="Enter username" onChange={this.updateUser.bind(this)} />
         userLabel = <ControlLabel>Username</ControlLabel>
+        changeRoleDiv = <form onSubmit={this.roleChangeClicked}> 
+          <FormGroup controlId="formBasicText" validationState={this.getValidationState("userRole")}><ControlLabel>Change user settings from user to admin or admin to user</ControlLabel>
+          <FormControl type="text" value={this.state.userRole} placeholder="Enter username" onChange = {this.updateUserRole.bind(this)} />
+          <FormControl.Feedback /></FormGroup>
+          <Button bsStyle="success" onClick={this.roleChangeClicked}>Submit</Button>
+          </form>
+        changeRoleLabel = "Change User Role";
+        if(!this.state.hasSearchedUser) {
+            searchUserButton = <Button bsStyle="success" onClick={this.searchClicked}>Search</Button>
+        }
     }
     return (
       <div className="addUser">
         <div className="header">Manage Account</div>
+        
+        
         <form onSubmit={this.submitClicked}>
           <FormGroup controlId="formBasicText" validationState={this.getValidationState("username")}>
             {userLabel}
@@ -111,6 +148,8 @@ class ManageAccount extends Component {
           <Button bsStyle="success" onClick={this.submitClicked}>Submit</Button>
         </form>
         <div className={messageClass}>{this.state.errroMessage}</div>
+        <div className="header">{changeRoleLabel}</div>
+        {changeRoleDiv}
       </div>
     );
   }

@@ -337,6 +337,31 @@ def create_user():
     return jsonify('Success')
 
 
+#############################fix this!!
+@app.route("/api/users/<user>/settings", methods=['POST'])
+@needs_admin()
+def change_setting(user):
+    token = request.cookies.get('token')
+    payload = get_token_payload(token)
+    if payload['user'] == user:
+        abort(422, 'Cannot update your own account while in use')
+
+    accounts = DB.table('accounts')
+    User = Query()
+    if not accounts.search(User.username == user):
+        abort(401, 'Invalid user')
+
+    current_user = accounts.get(User.username == user)
+    new_admin = current_user['admin']
+    if(new_admin):
+        new_admin = False
+    else: 
+        new_admin = True
+    accounts.update({'admin': new_admin}, User.username == user)
+    #accounts.update({'password': new_pass}, User.username == user)
+    return jsonify('Success')
+
+
 @app.route("/api/camera", methods=['GET'])
 @needs_admin()
 def get_camera():
