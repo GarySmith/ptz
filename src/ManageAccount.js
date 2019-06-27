@@ -4,7 +4,7 @@ import { FormGroup } from 'react-bootstrap';
 import { FormControl } from 'react-bootstrap';
 import { ControlLabel } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
-
+import { Checkbox } from 'react-bootstrap';
 class ManageAccount extends Component {
   constructor(props) {
     super(props);
@@ -16,6 +16,10 @@ class ManageAccount extends Component {
       userRole: '',
       errorMessage: '',
       hasSearchedUser : false,
+      searchedUser: '',
+      displayName: '',
+      sessionDuration: 1,
+      searchAdmin : false,
     };
   }
 
@@ -36,6 +40,19 @@ class ManageAccount extends Component {
   updateUserRole(evt) {
     this.setState({userRole : evt.target.value});
   }
+  updateUserSearch(evt) {
+    this.setState({searchedUser : evt.target.value});
+  }
+  updateBox(evt) {
+    this.setState({searchAdmin : evt.target.value});
+  }
+  updateDisplayName(evt) {
+    this.setState({displayName : evt.target.value});
+  }
+  updateSessionDuration(evt) {
+    this.setState({sessionDuration : evt.target.value});
+  }
+
   submitClicked = (evt) => {
     if((this.state.isAdmin && this.state.username.length<3) || this.state.password.length<3 || this.state.passConfirm<3) {
       this.setState({errorMessage: "Please make sure all entries are at least 3 characters long"});
@@ -74,8 +91,15 @@ class ManageAccount extends Component {
     else if(str==="password") {
       len=this.state.password.length;
     }
-    else if(str==="userRole") {
-        len = this.state.userRole.length;
+    else if(str==="session") {
+        if(this.state.sessionDuration<1) return 'error';
+        else return null;
+    }
+    else if(str==="searchedUser") {
+        len = this.state.searchedUser.length;
+    }
+    else if(str==="displayName") {
+        len = this.state.displayName.length;
     }
     else {
       len=this.state.passConfirm.length;
@@ -99,57 +123,80 @@ class ManageAccount extends Component {
   }
     
   searchClicked = (evt) => {
-
+        this.setState({hasSearchedUser: true});
   }
 
   render() {
     let messageClass='';
-    let userTextBox;
-    let userLabel;
-    let changeRoleDiv;
-    let changeRoleLabel = "";
-    let searchUserButton;
+    let changeRoleFormGroup;
+    let searchUserForm;
+    let usernameLabel;
+    let passwordFormGroup;
+    let confirmPasswordFormGroup;
+    let displayFormGroup;   
+    let sessionFormGroup;
+    let submitButton;
+  
     if(this.state.isAdmin) {
-        userTextBox =
-          <FormControl type="text" value={this.state.username} placeholder="Enter username" onChange={this.updateUser.bind(this)} />
-        userLabel = <ControlLabel>Username</ControlLabel>
-        changeRoleDiv = <form onSubmit={this.roleChangeClicked}> 
-          <FormGroup controlId="formBasicText" validationState={this.getValidationState("userRole")}><ControlLabel>Change user settings from user to admin or admin to user</ControlLabel>
-          <FormControl type="text" value={this.state.userRole} placeholder="Enter username" onChange = {this.updateUserRole.bind(this)} />
-          <FormControl.Feedback /></FormGroup>
-          <Button bsStyle="success" onClick={this.roleChangeClicked}>Submit</Button>
-          </form>
-        changeRoleLabel = "Change User Role";
-        if(!this.state.hasSearchedUser) {
-            searchUserButton = <Button bsStyle="success" onClick={this.searchClicked}>Search</Button>
+        if(this.state.hasSearchedUser) {
+          usernameLabel = <ControlLabel>Username: {this.state.searchedUser}</ControlLabel>
+          changeRoleFormGroup =
+            <div><Checkbox inline onChange={this.updateBox.bind(this)}>Admin User</Checkbox></div>
+          sessionFormGroup = 
+            <FormGroup controlId="formBasicText" validationState={this.getValidationState("session")}>
+              <ControlLabel>Edit session duration (in days) </ControlLabel>
+              <FormControl type="number" value={this.state.sessionDuration} onChange={this.updateSessionDuration.bind(this)} />
+              <FormControl.Feedback />
+            </FormGroup>
         }
-    }
-    return (
-      <div className="addUser">
-        <div className="header">Manage Account</div>
-        
-        
-        <form onSubmit={this.submitClicked}>
-          <FormGroup controlId="formBasicText" validationState={this.getValidationState("username")}>
-            {userLabel}
-            {userTextBox}
-            <FormControl.Feedback />
-          </FormGroup>
+        else {
+          searchUserForm = <form onSubmit={this.searchClicked}> 
+            <FormGroup controlId="formBasicText" validationState={this.getValidationState("searchedUser")}><ControlLabel>Search for a user</ControlLabel>
+            <FormControl type="text" value={this.state.searchedUser} placeholder="Enter username" onChange = {this.updateUserSearch.bind(this)} />
+            <FormControl.Feedback /></FormGroup>
+            <Button bsStyle="success" onClick={this.searchClicked}>Submit</Button>
+          </form>
+        }
+     } 
+     if(this.state.hasSearchedUser || !this.state.isAdmin) {
+        passwordFormGroup = 
           <FormGroup controlId="formBasicText" validationState={this.getValidationState("password")}>
             <ControlLabel>New Password</ControlLabel>
             <FormControl type="text" value={this.state.password} placeholder="Enter new password" onChange={this.updatePassword.bind(this)} />
             <FormControl.Feedback />
           </FormGroup>
+
+        confirmPasswordFormGroup = 
           <FormGroup controlId="formBasicText" validationState={this.getValidationState("confirmPass")}>
             <ControlLabel>Confirm New Password</ControlLabel>
             <FormControl type="text" value={this.state.passConfirm} placeholder="Enter new password" onChange={this.updatePassConfirm.bind(this)} />
             <FormControl.Feedback />
           </FormGroup>
-          <Button bsStyle="success" onClick={this.submitClicked}>Submit</Button>
+       
+         displayFormGroup = 
+          <FormGroup controlId="formBasicText" validationState={this.getValidationState("displayName")}>
+            <ControlLabel>Change display name</ControlLabel>
+            <FormControl type="text" value={this.state.displayName} placeholder="Enter new display name" onChange={this.updateDisplayName.bind(this)} />
+            <FormControl.Feedback />
+          </FormGroup>
+          
+          submitButton = <Button bsStyle="success" onClick={this.submitClicked}>Submit</Button>
+     }
+    
+    return (
+      <div className="addUser">
+        <div className="header">Manage Account</div>
+        {searchUserForm} 
+        <form onSubmit={this.submitClicked}>
+          {usernameLabel}
+          {displayFormGroup}
+          {passwordFormGroup}
+          {confirmPasswordFormGroup}
+          {sessionFormGroup}
+          {changeRoleFormGroup}<p></p> 
+          {submitButton}
         </form>
         <div className={messageClass}>{this.state.errroMessage}</div>
-        <div className="header">{changeRoleLabel}</div>
-        {changeRoleDiv}
       </div>
     );
   }

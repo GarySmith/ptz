@@ -352,11 +352,13 @@ def change_setting(user):
         abort(401, 'Invalid user')
 
     current_user = accounts.get(User.username == user)
-    new_admin = current_user['admin']
+    new_admin = not current_user['admin']
+    '''
     if(new_admin):
         new_admin = False
     else: 
         new_admin = True
+    '''
     accounts.update({'admin': new_admin}, User.username == user)
     #accounts.update({'password': new_pass}, User.username == user)
     return jsonify('Success')
