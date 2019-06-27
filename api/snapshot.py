@@ -22,9 +22,6 @@ from . import vlc
 #   + Format: jpg
 #   + Video snapshot width: 200
 #   + Video snapshot height: 110
-#
-# Inputs:
-#   Host name or IP, Share name, username(optional), password(optional)
 
 
 def get_host_ip(host_or_ip):
@@ -48,7 +45,7 @@ def get_host_ip(host_or_ip):
     return host, ip_addr
 
 
-def take_snapshot(host_or_ip, share, rc_port):
+def take_snapshot(host_or_ip, share, rc_port, delete_after=True):
     """Take snapshot of the current vlc video feed
 
     Use the remote control interface on the camera to capture a
@@ -98,8 +95,9 @@ def take_snapshot(host_or_ip, share, rc_port):
         filename = fp.name
         attributes, size = conn.retrieveFile(share, file.filename, fp)
 
+    if delete_after:
+        # Delete the file from the remote system (where VLC runs) to avoid
+        # leaving lots of files lying around
+        conn.deleteFiles(share, file.filename)
+
     return filename
-
-
-# filename = take_snapshot('192.168.1.2', 'scans', 4200)
-# print(filename)

@@ -1,5 +1,5 @@
-from flask import Flask, jsonify, send_from_directory, send_file, \
-    request, abort
+from flask import Flask, jsonify, send_from_directory, \
+    request, abort, current_app
 import datetime
 import logging
 import logging.handlers
@@ -389,9 +389,22 @@ def take_snapshot():
     vlc_settings = get_vlc_settings()
 
     try:
-        return send_file(snapshot.take_snapshot(vlc_settings['ip_address'],
-                                                vlc_settings['share'],
-                                                vlc_settings['rc_port']))
+        name = snapshot.take_snapshot(vlc_settings['ip_address'],
+                                      vlc_settings['share'],
+                                      vlc_settings['rc_port'])
+
+        # In order to avoid cluttering up /tmp with snapshots, remove
+        # the file after it is streamed.  As suggested in
+        # https://stackoverflow.com/a/40854330 , a generator is used to
+        # supply the contents of the file and then delete it afterward
+
+        def generate():
+            with open(name, "rb") as f:
+                yield from f
+            os.remove(name)
+
+        return current_app.response_class(generate(), mimetype='image/jpeg')
+
     except Exception as e:
         abort(500, str(e))
 
