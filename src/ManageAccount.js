@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-//import { doFetch } from './RestUtils.js';
+import { doFetch } from './RestUtils.js';
 import { FormGroup } from 'react-bootstrap';
 import { FormControl } from 'react-bootstrap';
 import { ControlLabel } from 'react-bootstrap';
@@ -36,7 +36,7 @@ class ManageAccount extends Component {
     if((this.state.isAdmin && this.state.username.length<3) || this.state.password.length<3 || this.state.passConfirm<3) {
       this.setState({errorMessage: "Please make sure all entries are at least 3 characters long"});
     }
-    else if(this.state.passConfirm!=this.state.password) {
+    else if(this.state.passConfirm!==this.state.password) {
       this.setState({errorMessage: "Passwords don't match"});
     } //confirming old password???
     else {
