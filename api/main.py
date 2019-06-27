@@ -4,6 +4,7 @@ import datetime
 import logging
 import logging.handlers
 import os
+import shutil
 import time
 from tinydb import TinyDB, Query
 
@@ -391,5 +392,22 @@ def take_snapshot():
         return send_file(snapshot.take_snapshot(vlc_settings['ip_address'],
                                                 vlc_settings['share'],
                                                 vlc_settings['rc_port']))
+    except Exception as e:
+        abort(500, str(e))
+
+
+@app.route("/api/vlc/snapshot/<int:preset>", methods=['POST'])
+@needs_admin()
+def update_preset_snapshot(preset):
+
+    vlc_settings = get_vlc_settings()
+
+    try:
+        name = snapshot.take_snapshot(vlc_settings['ip_address'],
+                                      vlc_settings['share'],
+                                      vlc_settings['rc_port'])
+        shutil.move(name, 'public/images/{0}.jpg'.format(preset))
+        return jsonify("Success")
+
     except Exception as e:
         abort(500, str(e))

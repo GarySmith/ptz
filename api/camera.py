@@ -28,7 +28,7 @@ def get_position(ip_address, port):
 
         # Get ZOOM
         network.send_bytes(s, INQ_ZOOM)
-        resp = network.receive_bytes(s, EOM)
+        resp = network.receive_bytes(s, eom=EOM)
         zoom = 0
         if len(resp) > 6:
             for i in range(2, 6):
@@ -40,7 +40,7 @@ def get_position(ip_address, port):
 
         # Get PAN, TILT
         network.send_bytes(s, INQ_PANTILT)
-        resp = network.receive_bytes(s, EOM)
+        resp = network.receive_bytes(s, eom=EOM)
         pan = 0
         if len(resp) > 6:
             for i in range(2, 6):
@@ -64,7 +64,7 @@ def recall_preset(ip_address, port, preset):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((ip_address, port))
         network.send_bytes(s, req)
-        network.receive_bytes(s, EOM)
+        network.receive_bytes(s, eom=EOM)
 
     last_pos = {}
     current_pos = get_position(ip_address, port)
