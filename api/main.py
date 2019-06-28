@@ -248,6 +248,7 @@ def login():
 def change_password(user):
     info = request.get_json()
     password = info.get('password')
+    #import pdb;pdb.set_trace()
     return update_password(user, password)
 
 
@@ -331,58 +332,38 @@ def create_user():
         'password': info['password'],
         'admin': info.get('admin') in ('true', True),
         'display_name': info.get('display_name', ''),
+        'session_duration': 1,
     }
     accounts.insert(user)
     return jsonify('Success')
 
 
-# admin can change roles from user->admin or admin->user
+# admin can change a user's display_name, password, session duration, and role
 @app.route("/api/users/<user>/settings", methods=['POST'])
 @needs_admin()
 def change_setting(user):
-    token = request.cookies.get('token')
-    payload = get_token_payload(token)
-    if payload['user'] == user:
-        abort(422, 'Cannot update your own account while in use')
-
     accounts = DB.table('accounts')
     User = Query()
     if not accounts.search(User.username == user):
         abort(401, 'Invalid user')
-
-    current_user = accounts.get(User.username == user)
-    new_admin = not current_user['admin']
-    '''
-    if(new_admin):
-        new_admin = False
-    else: 
-        new_admin = True
-    '''
-    accounts.update({'admin': new_admin}, User.username == user)
-    return jsonify('Success')
-
-#admin can change a user's display name
-@app.route("/api/users/<user>/display", methods=['POST'])
-@needs_admin()
-def change_displayname(user):
     info = request.get_json()
-    new_display_name = info.get('display_name')
-    accounts = DB.table('accounts')
-    User = Query()
-    if not accounts.search(User.username == user):
-        abort(401, 'Invalid user')
-
-    accounts.update({'display_name': new_display_name}, User.username == user)
+    password = info.get('password')
+    admin = info.get('admin')
+    display = info.get('display_name')  
+    session = info.get('session')  
+    if len(password) > 0:
+        accounts.update({'password': password}, User.username == user)
+    if len(display) > 0:
+        accounts.update({'display_name': display}, User.username == user)
+    accounts.update({'admin': admin, 'session_duration': session}, 
+        User.username == user)
     return jsonify('Success')
 
 
-#users can change their own display name
-@app.route("/api/users/display", methods=['POST'])
+# user can change a user's display_name and password
+@app.route("/api/users/settings", methods=['POST'])
 @needs_user()
-def change_my_displayname():
-    info = request.get_json()
-    new_display_name = info.get('display_name')
-    # Get username from the token
+def change_my_setting():
     token = request.cookies.get('token')
     payload = get_token_payload(token)
     user = payload['user']
@@ -391,7 +372,13 @@ def change_my_displayname():
     if not accounts.search(User.username == user):
         abort(401, 'Invalid user')
 
-    accounts.update({'display_name': new_display_name}, User.username == user)
+    info = request.get_json()
+    password = info.get('password')
+    display = info.get('display_name')    
+    if len(display) > 0:
+        accounts.update({'display_name': display}, User.username == user)
+    if len(password) > 0:
+        accounts.update({'password': password}, User.username == user)
     return jsonify('Success')
 
 

@@ -92,81 +92,36 @@ class ManageAccount extends Component {
       this.setState({errorMessage: "Session duration has to be one day or longer"});
     }
     else {
-      if(passLen>2) {
-        this.changeUserPassword();
-      }
-      if(displayLen>2) {
-        this.changeDisplayName();
-      }
-      this.changeSessionDuration();
-      this.changeUserRole();
+      this.updateSettings()
     }
   }
-    
-  changeUserPassword() {
-      if(this.state.isAdmin) {
-        const body = JSON.stringify({password: this.state.password});
-        doFetch('api/users/' + this.state.searchedUser + '/password', 'POST', body)
-            .then(response => {
-            this.setState({errorMessage: 'Changed password successfully for ' + this.state.username + '!'});
-            })
-            .catch((error) => {
-            this.setState({errorMessage: 'Failed to change password'});
-            })
-      }
-      else {
-        const body = JSON.stringify({password: this.state.password});
-        doFetch('api/password', 'POST', body)
-            .then(response => {
-            this.setState({errorMessage: 'Changed password successfully!'});
-            })
-            .catch((error) => {
-            this.setState({errorMessage: 'Failed to change password'});
-            })
-      }
-
-  }
-  changeUserRole() {
-     let dbRole;
-     doFetch('api/users/' + this.state.searchedUser, 'GET')
-        .then(response => {dbRole = response.admin}).catch((error)=> {});
-     if(dbRole===this.state.searchAdmin) return;
-
-     const body = JSON.stringify({user: this.state.searchedUser});
-     doFetch('api/users/' + this.state.searchedUser + '/settings', 'POST', body)
+   
+  updateSettings() { 
+    if(this.state.isAdmin) { 
+      const body = JSON.stringify({user: this.state.searchedUser, admin: this.state.searchAdmin,
+                                display_name: this.state.displayName, password: this.state.password,
+                                session: this.state.sessionDuration});
+      doFetch('api/users/' + this.state.searchedUser + '/settings', 'POST', body)
         .then(response => {
           this.setState({errorMessage: 'Changed settings successfully for ' + this.state.searchedUser + '!'});
          })
         .catch((error) => {
           this.setState({errorMessage: 'Failed to change settings for ' + this.state.searchedUser});
         })
+     }
+    else { 
+      const body = JSON.stringify({user: this.state.username,  
+                             display_name: this.state.displayName, password: this.state.password});
+      doFetch('api/users/settings', 'POST', body)
+        .then(response => {
+          this.setState({errorMessage: 'Changed settings successfully!'});
+         })
+        .catch((error) => {
+          this.setState({errorMessage: 'Failed to change settings'});
+        })
+     }
   }
-    
-  changeDisplayName() {
-      if(this.state.isAdmin) {
-        const body = JSON.stringify({display_name: this.state.displayName});
-        doFetch('api/users/' + this.state.searchedUser + '/display', 'POST', body)
-            .then(response => {
-            this.setState({errorMessage: 'Changed display name successfully for ' + this.state.searchedUser + '!'});
-            })
-            .catch((error) => {
-            this.setState({errorMessage: 'Failed to change display name'});
-            })
-      }
-      else {
-        const body = JSON.stringify({display_name: this.state.displayName});
-        doFetch('api/users/display', 'POST', body)
-            .then(response => {
-            this.setState({errorMessage: 'Changed your display name successfully!'});
-            })
-            .catch((error) => {
-            this.setState({errorMessage: 'Failed to change your display name'});
-            })
-      }
-  }
-  changeSessionDuration() {
-
-  }
+ 
   searchClicked = (evt) => {
     doFetch('api/users/' + this.state.searchedUser, 'GET')
         .then(response => {
@@ -190,9 +145,13 @@ class ManageAccount extends Component {
   
     if(this.state.isAdmin) {
         if(this.state.hasSearchedUser) {
+          let isYourself = false;
+          if(this.state.searchedUser===this.props.username) {
+            isYourself = true;
+          }
           usernameLabel = <ControlLabel>Username: {this.state.searchedUser}</ControlLabel>
           changeRoleFormGroup = 
-            <div><Checkbox inline onChange={this.updateBox.bind(this)} checked = {this.state.searchAdmin}>Admin User</Checkbox></div>
+            <div><Checkbox inline onChange={this.updateBox.bind(this)} disabled={isYourself} checked = {this.state.searchAdmin}>Admin User</Checkbox></div>
           sessionFormGroup = 
             <FormGroup controlId="formBasicText" validationState={this.getValidationState("session")}>
               <ControlLabel>Edit session duration (in days) </ControlLabel>
