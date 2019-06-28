@@ -29,8 +29,14 @@ body {
   top: 0px;
   line-height: 50px;
 }
+.snapshot {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+}
 .camera {
   cursor: pointer;
+  margin-right: 3px;
 }
 .about {
   display: initial;

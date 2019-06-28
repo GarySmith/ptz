@@ -28,7 +28,7 @@ class App extends Component {
       admin: false,
       display_name: '',
       dropDown: false,
-      showSnapshot: false,
+      snapshotTimestamp: 0,  // time when snapshot taken
     };
   }
 
@@ -41,13 +41,20 @@ class App extends Component {
   }
 
   takeSnapshot = () => {
-    this.setState({showSnapshot: true});
     if (this.snapshotTimer) {
+      console.log('snapshot is already being shown. Taking a new one');
       clearTimeout(this.snapshotTimer);
     }
+
+    // Use a unique query parameter so that the browser takes
+    // a new snapshot rather than serving up an old one
+    const timestamp = new Date().getTime();
+
+    this.setState({snapshotTimestamp: timestamp});
     this.snapshotTimer = setTimeout(() => {
-      this.setState({showSnapshot: false});
-    }, 1000);
+      this.setState({snapshotTimestamp: 0});
+      this.snapshotTimer = null;
+    }, 2500);
   }
 
   presetClicked = (num) => {
@@ -186,11 +193,8 @@ class App extends Component {
       )
       });
       let img;
-      if (this.state.showSnapshot) {
-        // Use a unique query parameter so that the browser always
-        // makes the query rather than serving up an old cached image
-        const timestamp = new Date().getTime();
-        img = (<img src={"/api/vlc/snapshot?t" + timestamp}/>);
+      if (this.state.snapshotTimestamp > 0) {
+        img = (<img alt='snapshot' src={"/api/vlc/snapshot?t=" + this.state.snapshotTimestamp}/>);
       }
       homeMenu = (
           <React.Fragment>
@@ -199,7 +203,7 @@ class App extends Component {
                 {buttons}
               </div>
             </center>
-            <div>
+            <div className="snapshot">
               <span className='camera'>
                 <MaterialIcon icon="photo_camera" size='large' onClick={() => this.takeSnapshot()}/>
               </span>
@@ -262,7 +266,7 @@ class App extends Component {
             <div className={userOptions} onClick={()=> this.logoutClicked()}>Logout</div>
 
           </div>
-          <span className="hamburger" onClick={(e) => this.openNav(e)}>&#9776;</span>
+          <span className="hamburger" onClick={(e) => this.openNav()}>&#9776;</span>
           <div className="title">PTZ Camera Control</div>
           <div className="usermenu" onClick={this.iconClicked}>{welcomeMessage}</div>
         </div>

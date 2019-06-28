@@ -58,12 +58,12 @@ class Address extends Component {
         <form className="settingsForm">
           <FormGroup controlId="cameraIPAddress" validationState={this.state.addressValid ? 'success' : 'error'}>
             <ControlLabel>IP Address</ControlLabel>
-            <FormControl type="text" size="15" maxLength="15" value={this.state.addressInput} onChange={this.updateAddressInput}/>
+            <FormControl type="text" size={15} maxLength={15} value={this.state.addressInput} onChange={this.updateAddressInput}/>
             <FormControl.Feedback />
           </FormGroup>
           <FormGroup controlId="cameraPort" validationState={this.state.portValid ? 'success' : 'error'}>
             <ControlLabel>PTZ Port</ControlLabel>
-            <FormControl type="number" min="1" max="65535" size="5" value={this.state.portInput} onChange={this.updatePortInput}/>
+            <FormControl type="number" min={1} max={65535} size={5} value={this.state.portInput} onChange={this.updatePortInput}/>
             <FormControl.Feedback />
           </FormGroup>
           <Button type="submit" bsStyle="success" disabled={! enableButton} onClick={this.onSubmit}>Submit</Button>
