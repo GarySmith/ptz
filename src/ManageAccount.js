@@ -104,7 +104,8 @@ class ManageAccount extends Component {
       doFetch('api/users/' + this.state.searchedUser + '/settings', 'POST', body)
         .then(response => {
           this.setState({errorMessage: 'Changed settings successfully for ' + this.state.searchedUser + '!'});
-         })
+          this.props.onComplete();
+          })
         .catch((error) => {
           this.setState({errorMessage: 'Failed to change settings for ' + this.state.searchedUser});
         })
@@ -115,6 +116,7 @@ class ManageAccount extends Component {
       doFetch('api/users/settings', 'POST', body)
         .then(response => {
           this.setState({errorMessage: 'Changed settings successfully!'});
+          this.props.onComplete();
          })
         .catch((error) => {
           this.setState({errorMessage: 'Failed to change settings'});

@@ -98,7 +98,7 @@ class AddUser extends Component {
     if(this.state.errorMessage==='') {
       messageClass='';
     }
-    else if(this.state.errorMessage==='User added successfully!') {
+    else if(this.state.errorMessage === 'User added successfully!' || this.state.errorMessage === 'User deleted successfully!') {
       messageClass="success";
     } else {
       messageClass="error";

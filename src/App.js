@@ -229,7 +229,8 @@ class App extends Component {
       updateMenu = (<Update admin={this.state.admin}/>);  //only admin
     }
     else if(this.state.currentView==='manageAccount') {
-      manageAccount = (<ManageAccount admin={this.state.admin} username={this.state.username}/>);
+      manageAccount = (<ManageAccount admin={this.state.admin} username={this.state.username} 
+                       onComplete={() => this.setState({currentView: 'home'})}/>);
     }
     else if(this.state.currentView==='addUser') {
       addUser = (<AddUser admin={this.state.admin}/>);
