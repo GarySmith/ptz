@@ -300,8 +300,7 @@ def get_all_users():
 
     accounts = DB.table('accounts')
     # User = Query()
-    all_users = [user['username'] for user in accounts.all()]
-    return jsonify(all_users)
+    return jsonify(accounts.all())
 
 
 @app.route("/api/users/<user>", methods=['GET'])

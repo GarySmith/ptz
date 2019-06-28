@@ -5,6 +5,8 @@ import { FormControl } from 'react-bootstrap';
 import { ControlLabel } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
 import { Checkbox } from 'react-bootstrap';
+import { Table } from 'react-bootstrap';
+
 class ManageAccount extends Component {
   constructor(props) {
     super(props);
@@ -125,12 +127,58 @@ class ManageAccount extends Component {
   }
  
   searchClicked = (evt) => {
+    evt.preventDefault();
     doFetch('api/users/' + this.state.searchedUser, 'GET')
         .then(response => {
           this.setState({errorMessage: '', hasSearchedUser: true, searchAdmin: response.admin});
          })
         .catch((error) => {
           this.setState({errorMessage: 'User does not exist', hasSearchedUser: false});
+        })
+  }
+  createTable() {
+    let table =  <Table striped bordered hover size="sm">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Display Name</th>
+              <th>Session Duration</th>
+              <th>Admin?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>holly</td>
+              <td>Holly Donis</td>
+              <td>2</td>
+              <td>Y</td>
+            </tr>
+            <tr>
+              <td>gary</td>
+              <td>Gary Smith</td>
+              <td>1</td>
+              <td>Y</td>
+            </tr>
+            {this.createUserList()}
+          </tbody>
+        </Table>
+    return table;
+  }
+  createUserList() {
+    let userTags = [];
+    doFetch('api/users', 'GET')
+        .then(response => {
+          for(let i = 0; i < response.length; i++) {
+           userTags[i] = (  
+            <tr><td>{response[i].username}</td>
+            <td>{response[i].display_name}</td>
+            <td>{response[i].session_duration}</td>
+            <td>{response[i].admin}</td></tr>);
+           }
+           return userTags;
+         })
+        .catch((error) => {
+          this.setState({errorMessage: 'Unable to display user table', hasSearchedUser: false});
         })
   }
 
@@ -144,6 +192,7 @@ class ManageAccount extends Component {
     let displayFormGroup;   
     let sessionFormGroup;
     let submitButton;
+    let table;
   
     if(this.state.isAdmin) {
         if(this.state.hasSearchedUser) {
@@ -168,6 +217,8 @@ class ManageAccount extends Component {
             <FormControl.Feedback /></FormGroup>
             <Button bsStyle="success" onClick={this.searchClicked}>Submit</Button>
           </form>
+           
+           table = this.createTable();
         }
      } 
      if(this.state.hasSearchedUser || !this.state.isAdmin) {
@@ -214,6 +265,7 @@ class ManageAccount extends Component {
           {submitButton}
         </form>
         <div className={messageClass}>{this.state.errorMessage}</div>
+        {table}
       </div>
     );
   }
