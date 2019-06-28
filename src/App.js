@@ -28,7 +28,7 @@ class App extends Component {
       admin: false,
       display_name: '',
       dropDown: false,
-      snapshotTimestamp: 0,  // time when snapshot taken
+      snapshotTimestamp: 0,  // time when snapshot taken (-1 == none available)
     };
   }
 
@@ -40,21 +40,37 @@ class App extends Component {
       this.cancelPolling();
   }
 
+  setSnapshotTimer = () => {
+      this.snapshotTimer = setTimeout(() => {
+        this.setState({snapshotTimestamp: 0});
+        this.snapshotTimer = null;
+      }, 2500);
+  }
+
   takeSnapshot = () => {
     if (this.snapshotTimer) {
       console.log('snapshot is already being shown. Taking a new one');
       clearTimeout(this.snapshotTimer);
+      this.setState({snapshotTimestamp: 0});
     }
 
-    // Use a unique query parameter so that the browser takes
-    // a new snapshot rather than serving up an old one
-    const timestamp = new Date().getTime();
+    doFetch('/api/vlc/is_playing', "GET")
+    .then(response => {
+      let timestamp = -1;
 
-    this.setState({snapshotTimestamp: timestamp});
-    this.snapshotTimer = setTimeout(() => {
-      this.setState({snapshotTimestamp: 0});
-      this.snapshotTimer = null;
-    }, 2500);
+      if (response) {
+        // Use a unique query parameter so that the browser takes
+        // a new snapshot rather than serving up an old one
+        timestamp = new Date().getTime();
+      }
+
+      this.setState({snapshotTimestamp: timestamp});
+      this.setSnapshotTimer();
+    })
+    .catch(error => {
+      this.setState({snapshotTimestamp: -1});
+      this.setSnapshotTimer();
+    });
   }
 
   presetClicked = (num) => {
@@ -195,6 +211,8 @@ class App extends Component {
       let img;
       if (this.state.snapshotTimestamp > 0) {
         img = (<img alt='snapshot' src={"/api/vlc/snapshot?t=" + this.state.snapshotTimestamp}/>);
+      } else if (this.state.snapshotTimestamp < 0) {
+        img = (<img alt='snapshot' src={process.env.PUBLIC_URL + 'images/not_playing.png'} />);
       }
       homeMenu = (
           <React.Fragment>

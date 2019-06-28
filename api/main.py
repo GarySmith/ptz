@@ -418,7 +418,6 @@ def get_vlc():
 
 
 @app.route("/api/vlc/is_playing", methods=['GET'])
-@needs_admin()
 def is_playing():
 
     vlc_settings = get_vlc_settings()
