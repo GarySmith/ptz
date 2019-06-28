@@ -103,6 +103,7 @@ class App extends Component {
     let token = cookies.get('token');
     let decode = jwt.decode(token);
     if(token) {
+      // @ts-ignore  (ignore Visual Studio warnings on the next line)
       this.onSuccess(decode.user, decode.name, decode.admin);
     }
   }
@@ -216,11 +217,9 @@ class App extends Component {
       }
       homeMenu = (
           <React.Fragment>
-            <center>
-              <div>
-                {buttons}
-              </div>
-            </center>
+            <div className='presetContainer'>
+              {buttons}
+            </div>
             <div className="snapshot">
               <span className='camera'>
                 <MaterialIcon icon="photo_camera" size='large' onClick={() => this.takeSnapshot()}/>
@@ -231,7 +230,10 @@ class App extends Component {
       );
     }
     else if(this.state.currentView==="about") {
-      aboutMenu = (<center> <div className={aboutMenu}>Copyright Gary Smith and Holly Donis 2018</div></center>);
+      aboutMenu = (
+      <div className='presetContainer'>
+        <div className={aboutMenu}>Copyright Gary Smith and Holly Donis 2018</div>
+      </div>);
     }
     else if(this.state.currentView==='login') {
       credentialsMenu = (<Login onSuccess={this.onSuccess}/>);
