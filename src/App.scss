@@ -2,7 +2,11 @@
 body {
     font-family: "Lato", sans-serif;
 }
-
+.tag {
+  &:hover {
+    cursor: pointer;
+  }
+}
 .error {
   color: red;
   padding: 10px;

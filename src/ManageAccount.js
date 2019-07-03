@@ -21,6 +21,7 @@ class ManageAccount extends Component {
       displayName: '',
       sessionDuration: 1,
       searchAdmin : false,
+      userList : [],
     };
   }
 
@@ -28,6 +29,17 @@ class ManageAccount extends Component {
     if(this.props.admin) {
      this.setState({isAdmin: true});
     }
+    doFetch('api/users', 'GET')
+        .then(response => {
+           for(let i = 0; i < response.length; i++) {
+             if(response[i].admin) response[i].admin = "yes"
+             else response[i].admin = "no" 
+           }
+           this.setState({userList : response});
+         })
+        .catch((error) => {
+          this.setState({errorMessage: 'Unable to display user table', hasSearchedUser: false});
+        })
   }
   updateUser(evt) {
     this.setState({username : evt.target.value});
@@ -136,6 +148,21 @@ class ManageAccount extends Component {
           this.setState({errorMessage: 'User does not exist', hasSearchedUser: false});
         })
   }
+  tableRowClicked(user) {
+    let username = user.target.innerText;
+    let adminYesNo = "";
+    let sesh_dur = 1;
+    for(let i = 0; i < this.state.userList.length; i++) {
+      if(this.state.userList[i]["username"]===username) {
+        sesh_dur = this.state.userList[i]["session_duration"];
+        adminYesNo = this.state.userList[i]["admin"]; break;
+      }
+    }
+    if(adminYesNo === "yes") this.setState({searchAdmin: true});
+    else this.setState({searchAdmin: false});
+    this.setState({searchedUser: username, errorMessage: '', hasSearchedUser: true, sessionDuration: sesh_dur});
+  }
+
   createTable() {
     let table =  <Table striped bordered hover size="sm">
           <thead>
@@ -147,39 +174,33 @@ class ManageAccount extends Component {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>holly</td>
-              <td>Holly Donis</td>
-              <td>2</td>
-              <td>Y</td>
-            </tr>
-            <tr>
-              <td>gary</td>
-              <td>Gary Smith</td>
-              <td>1</td>
-              <td>Y</td>
-            </tr>
-            {this.createUserList()}
+           {this.createUserList()} 
           </tbody>
         </Table>
     return table;
   }
   createUserList() {
-    let userTags = [];
-    doFetch('api/users', 'GET')
-        .then(response => {
-          for(let i = 0; i < response.length; i++) {
-           userTags[i] = (  
-            <tr><td>{response[i].username}</td>
-            <td>{response[i].display_name}</td>
-            <td>{response[i].session_duration}</td>
-            <td>{response[i].admin}</td></tr>);
-           }
-           return userTags;
-         })
-        .catch((error) => {
-          this.setState({errorMessage: 'Unable to display user table', hasSearchedUser: false});
-        })
+    let filteredList = [];
+    let searchLen = this.state.searchedUser.length;
+    for(let i = 0; i < this.state.userList.length; i++) {
+      if(this.state.userList[i]["username"].substr(0, searchLen) === this.state.searchedUser) {
+        filteredList.push(this.state.userList[i]);
+      }
+    }
+    if(searchLen < 1) {
+      filteredList = this.state.userList;
+    }
+    return filteredList.map((info, index) => {
+      const {admin, display_name, session_duration, username} = info
+        return (
+         <tr key={username} onClick={this.tableRowClicked.bind(this)} className="tag">
+         <td>{username}</td>
+         <td>{display_name}</td>
+         <td>{session_duration}</td>
+         <td>{admin}</td>
+         </tr>
+        )    
+     })
   }
 
   render() {
@@ -193,6 +214,7 @@ class ManageAccount extends Component {
     let sessionFormGroup;
     let submitButton;
     let table;
+    let tableTest = this.createUserList();
   
     if(this.state.isAdmin) {
         if(this.state.hasSearchedUser) {
