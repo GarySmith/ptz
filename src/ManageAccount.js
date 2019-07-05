@@ -110,10 +110,17 @@ class ManageAccount extends Component {
     }
   }
    
-  updateSettings() { 
+  createHash() {
+    const crypto = require('crypto');
+    const hmac = crypto.createHmac('sha256', this.state.password);
+    hmac.update('password');
+    return (hmac.digest('hex'));
+  }
+  updateSettings() {
+    let hashedPassword = this.createHash(); 
     if(this.state.isAdmin) { 
       const body = JSON.stringify({user: this.state.searchedUser, admin: this.state.searchAdmin,
-                                display_name: this.state.displayName, password: this.state.password,
+                                display_name: this.state.displayName, password: hashedPassword,
                                 session: this.state.sessionDuration});
       doFetch('api/users/' + this.state.searchedUser + '/settings', 'POST', body)
         .then(response => {
@@ -126,7 +133,7 @@ class ManageAccount extends Component {
      }
     else { 
       const body = JSON.stringify({user: this.state.username,  
-                             display_name: this.state.displayName, password: this.state.password});
+                             display_name: this.state.displayName, password: hashedPassword});
       doFetch('api/users/settings', 'POST', body)
         .then(response => {
           this.setState({errorMessage: 'Changed settings successfully!'});

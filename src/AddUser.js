@@ -42,8 +42,9 @@ class AddUser extends Component {
       this.setState({errorMessage: "Passwords don't match"});
     }
     else {
+      let hashedPassword = this.createHash();
       const body = JSON.stringify({username: this.state.username,
-        password: this.state.password, admin: this.state.admin, display_name: this.state.displayname});
+        password: hashedPassword, admin: this.state.admin, display_name: this.state.displayname});
       doFetch('api/users', 'POST', body)
         .then(response => {
           this.setState({errorMessage: 'User added successfully!'});
@@ -52,6 +53,12 @@ class AddUser extends Component {
           this.setState({errorMessage: 'Failed to add user'});
         })
     }
+  }
+  createHash() {
+    const crypto = require('crypto');
+    const hmac = crypto.createHmac('sha256', this.state.password);
+    hmac.update('password');
+    return (hmac.digest('hex'));
   }
   deleteUser = (evt) => {
      const body = JSON.stringify({username: this.state.username});

@@ -15,9 +15,10 @@ class Login extends Component {
   submitClicked = (evt) => {
     evt.preventDefault();
     let attemptedUsername = this.state.triedUser;
-    let attemptedPassword = this.state.triedPass;
+    let hashedPassword = this.createHash();
+ //  let hashedPassword = this.state.triedPass;
     console.log('submit clicked');
-    const body = JSON.stringify({username: attemptedUsername, password: attemptedPassword});
+    const body = JSON.stringify({username: attemptedUsername, password: hashedPassword});
     doFetch('/api/login', 'POST', body)
     .then(response => {
           this.setState({success: true, attempts: 1});
@@ -27,6 +28,12 @@ class Login extends Component {
        console.log("error is: " + error);
        this.setState({success: false, attempts: 1});
     })
+  }
+  createHash() {
+    const crypto = require('crypto');
+    const hmac = crypto.createHmac('sha256', this.state.triedPass);
+    hmac.update('password');
+    return (hmac.digest('hex'));
   }
 
   updateUser(evt) {
