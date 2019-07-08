@@ -5,6 +5,7 @@ import { FormControl } from 'react-bootstrap';
 import { ControlLabel } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
 import { Checkbox } from 'react-bootstrap';
+import password from './password.js';
 
 class AddUser extends Component {
   constructor(props) {
@@ -56,9 +57,9 @@ class AddUser extends Component {
   }
   createHash() {
     const crypto = require('crypto');
-    const hmac = crypto.createHmac('sha256', this.state.password);
-    hmac.update('password');
-    return (hmac.digest('hex'));
+    const hash = crypto.createHash('sha256');
+    hash.update(this.state.password);
+    return (hash.digest('hex'));
   }
   deleteUser = (evt) => {
      const body = JSON.stringify({username: this.state.username});

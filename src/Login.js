@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { doFetch } from './RestUtils.js';
 import { Button } from 'react-bootstrap';
+import password from './password.js';
 
 class Login extends Component {
   constructor(props) {
@@ -31,9 +32,9 @@ class Login extends Component {
   }
   createHash() {
     const crypto = require('crypto');
-    const hmac = crypto.createHmac('sha256', this.state.triedPass);
-    hmac.update('password');
-    return (hmac.digest('hex'));
+    const hash = crypto.createHash('sha256');
+    hash.update(this.state.triedPass);
+    return (hash.digest('hex'));
   }
 
   updateUser(evt) {
