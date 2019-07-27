@@ -395,12 +395,11 @@ def update_camera_settings():
 
     info = request.get_json()
 
-    # camera_settings = get_camera_settings()
     ip_address = info['ip_address']
     ptz_port = int(info['ptz_port'])
 
     if not network.test_connection(ip_address, ptz_port):
-        abort(422, 'Invalid host, port combination')
+        abort(422, 'Unable to connect')
 
     get_camera_settings()
     camera_settings = DB.table('camera')
@@ -415,6 +414,29 @@ def update_camera_settings():
 def get_vlc():
 
     return jsonify(get_vlc_settings())
+
+
+@app.route("/api/vlc", methods=['POST'])
+@needs_admin()
+def update_vlc_settings():
+
+    info = request.get_json()
+
+    host = info['host']
+    ip_address = info['ip_address']
+    rc_port = int(info['rc_port'])
+    share = info['share']
+
+    if not network.test_connection(ip_address, rc_port):
+        abort(422, 'Unable to connect to RC port')
+
+    vlc_settings = DB.table('vlc')
+    vlc_settings.update({
+        'host': host,
+        'ip_address': ip_address,
+        'rc_port': rc_port,
+        'share': share})
+    return jsonify("Success")
 
 
 @app.route("/api/vlc/is_playing", methods=['GET'])

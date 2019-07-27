@@ -3,7 +3,7 @@ import Cookies from 'universal-cookie';
 //import logo from './logo.svg';
 import './App.css';
 import Login from './Login.js';
-import Address from './Address.js';
+import Settings from './Settings.js';
 import Calibrate from './Calibrate.js';
 import Update from './Update.js';
 import jwt from 'jsonwebtoken';
@@ -238,9 +238,9 @@ class App extends Component {
     else if(this.state.currentView==='login') {
       credentialsMenu = (<Login onSuccess={this.onSuccess}/>);
     }
-    else if(this.state.currentView==="settings") { //change Address class to Settings
+    else if(this.state.currentView==="settings") {
       // TODO: This looks problematic. It may possibly trigger multiple timers
-      settingsMenu = (<Address onComplete={this.initialLoadPresets}/>); //only admin
+      settingsMenu = (<Settings onComplete={this.initialLoadPresets}/>); //only admin
     }
     else if(this.state.currentView==='calibrate') {
       calibrateMenu = (<Calibrate num_presets={presets_len} admin={this.state.admin} onComplete={this.initialLoadPresets}/>);  //only admin
@@ -249,7 +249,7 @@ class App extends Component {
       updateMenu = (<Update admin={this.state.admin}/>);  //only admin
     }
     else if(this.state.currentView==='manageAccount') {
-      manageAccount = (<ManageAccount admin={this.state.admin} username={this.state.username} 
+      manageAccount = (<ManageAccount admin={this.state.admin} username={this.state.username}
                        onComplete={() => this.setState({currentView: 'home'})}/>);
     }
     else if(this.state.currentView==='addUser') {

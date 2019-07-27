@@ -18,8 +18,21 @@ export function doFetch(url, method, body) {
       if (response.ok) {
         return response.json();
       } else {
-        // Reject the promise, which triggers the caller's catch block to be invoked
-        return Promise.reject(new RestError(response.statusText, response.status));
+        return response.json()
+        .then(obj => {
+          // Reject the promise, which triggers the caller's catch block to be invoked
+          return Promise.reject(new RestError(obj.description, obj.code));
+        })
+        .catch(e => {
+          // It would be preferable to test for instanceof RestError, but that does not seem to work
+          if (e.status) {
+            // Returning RestError unchanged from above
+            return Promise.reject(e);
+          } else {
+            // Wrapping previously uncaught error into a RestError
+            return Promise.reject(new RestError(response.statusText, response.status));
+          }
+        })
       }
     });
 }
