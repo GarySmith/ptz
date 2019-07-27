@@ -81,8 +81,7 @@ def get_vlc_settings():
     vlc = DB.table('vlc')
     settings = vlc.all()
     if (len(settings) < 1):
-        vlc.insert({'host': 'gary-laptop',
-                    'ip_address': '192.168.1.2',
+        vlc.insert({'address': '192.168.1.2',
                     'rc_port': 4200,
                     'share': 'scans'})
     return settings[0]
@@ -422,18 +421,16 @@ def update_vlc_settings():
 
     info = request.get_json()
 
-    host = info['host']
-    ip_address = info['ip_address']
+    address = info['address']
     rc_port = int(info['rc_port'])
     share = info['share']
 
-    if not network.test_connection(ip_address, rc_port):
+    if not network.test_connection(address, rc_port):
         abort(422, 'Unable to connect to RC port')
 
     vlc_settings = DB.table('vlc')
     vlc_settings.update({
-        'host': host,
-        'ip_address': ip_address,
+        'address': address,
         'rc_port': rc_port,
         'share': share})
     return jsonify("Success")
@@ -444,7 +441,7 @@ def is_playing():
 
     vlc_settings = get_vlc_settings()
 
-    return jsonify(vlc.is_playing(vlc_settings['ip_address'],
+    return jsonify(vlc.is_playing(vlc_settings['address'],
                                   vlc_settings['rc_port']))
 
 
@@ -454,7 +451,7 @@ def take_snapshot():
     vlc_settings = get_vlc_settings()
 
     try:
-        name = snapshot.take_snapshot(vlc_settings['ip_address'],
+        name = snapshot.take_snapshot(vlc_settings['address'],
                                       vlc_settings['share'],
                                       vlc_settings['rc_port'])
 
@@ -481,7 +478,7 @@ def update_preset_snapshot(preset):
     vlc_settings = get_vlc_settings()
 
     try:
-        name = snapshot.take_snapshot(vlc_settings['ip_address'],
+        name = snapshot.take_snapshot(vlc_settings['address'],
                                       vlc_settings['share'],
                                       vlc_settings['rc_port'])
         shutil.move(name, 'public/images/{0}.jpg'.format(preset))

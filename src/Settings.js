@@ -12,13 +12,11 @@ class Settings extends Component {
         cameraPortValid: true,
         cameraMessage: '',
 
-        vlcHostname: '',
-        vlcIPAddress: '',
+        vlcAddress: '',
         vlcRCPort: '',
         vlcSharename: '',
 
-        isVlcHostnameValid: true,
-        isVlcIPAddressValid: true,
+        isVlcAddressValid: true,
         isVlcRCPortValid: true,
         vlcMessage: '',
       };
@@ -34,27 +32,22 @@ class Settings extends Component {
     })
     .then(response => {
       this.setState({
-        vlcHostname: response.host,
-        vlcIPAddress: response.ip_address,
+        vlcAddress: response.address,
         vlcRCPort: response.rc_port,
         vlcSharename: response.share,
       });
     })
   }
 
-  isIPAddressValid(val) {
+  isAddressValid(val) {
     const IPV4ADDRESS = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-    return (IPV4ADDRESS.exec(val) !== null);
-  }
-
-  isHostnameValid(host) {
     const HOST = /^(?=^.{1,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_-]{1,63}\.?)+(?:[a-zA-Z]{2,})$)/;
-    return (HOST.exec(host) !== null);
+    return (IPV4ADDRESS.exec(val) !== null || HOST.exec(val) !== null);
   }
 
   updateCameraAddress = (evt) => {
     const val = evt.target.value;
-    this.setState({cameraAddress: val, cameraAddressValid: this.isIPAddressValid(val) || this.isHostnameValid(val)});
+    this.setState({cameraAddress: val, cameraAddressValid: this.isAddressValid(val)});
   }
 
   updateCameraPort = (evt) => {
@@ -63,14 +56,9 @@ class Settings extends Component {
     this.setState({cameraPort: val, cameraPortValid: portValid});
   }
 
-  updateVlcHostname = (evt) => {
+  updateVlcAddress = (evt) => {
     const val = evt.target.value;
-    this.setState({vlcHostname: val, isVlcHostnameValid: this.isHostnameValid(val)});
-  }
-
-  updateVlcIPAddress = (evt) => {
-    const val = evt.target.value;
-    this.setState({vlcIPAddress: val, isVlcIPAddressValid: this.isIPAddressValid(val)});
+    this.setState({vlcAddress: val, isVlcAddressValid: this.isAddressValid(val)});
   }
 
   updateVlcRcPort = (evt) => {
@@ -102,8 +90,7 @@ class Settings extends Component {
   onSubmitVLC = (evt) => {
     evt.preventDefault();
     doFetch('/api/vlc', 'POST', JSON.stringify({
-      host :this.state.vlcHostname,
-      ip_address :this.state.vlcIPAddress,
+      address :this.state.vlcAddress,
       rc_port :this.state.vlcRCPort,
       share: this.state.vlcSharename,
     }))
@@ -118,13 +105,13 @@ class Settings extends Component {
 
   render() {
     const enableSubmitCamera = this.state.cameraPortValid && this.state.cameraAddressValid;
-    const enableSubmitVLC = this.state.isVlcHostnameValid && this.state.isVlcIPAddressValid && this.state.isVlcRCPortValid;
+    const enableSubmitVLC = this.state.isVlcAddressValid && this.state.isVlcRCPortValid;
 
     return (
       <div>
         <div className="header">Camera Settings</div>
         <form className="settingsForm">
-          <FormGroup controlId="cameraIPAddress" validationState={this.state.cameraAddressValid ? 'success' : 'error'}>
+          <FormGroup controlId="cameraAddress" validationState={this.state.cameraAddressValid ? 'success' : 'error'}>
             <ControlLabel>Hostname or IP Address</ControlLabel>
             <FormControl type="text" size={25} maxLength={25} value={this.state.cameraAddress} onChange={this.updateCameraAddress}/>
             <FormControl.Feedback />
@@ -139,14 +126,9 @@ class Settings extends Component {
         </form>
         <div className="header">VLC Settings</div>
         <form className="settingsForm">
-          <FormGroup controlId="VLCHostname" validationState={this.state.isVlcHostnameValid ? 'success' : 'error'}>
-            <ControlLabel>Hostname</ControlLabel>
-            <FormControl type="text" size={25} maxLength={25} value={this.state.vlcHostname} onChange={this.updateVlcHostname}/>
-            <FormControl.Feedback />
-          </FormGroup>
-          <FormGroup controlId="vlcIPAddress" validationState={this.state.isVlcIPAddressValid ? 'success' : 'error'}>
-            <ControlLabel>IP Address</ControlLabel>
-            <FormControl type="text" size={15} maxLength={15} value={this.state.vlcIPAddress} onChange={this.updateVlcIPAddress}/>
+          <FormGroup controlId="vlcAddress" validationState={this.state.isVlcAddressValid ? 'success' : 'error'}>
+            <ControlLabel>Hostname or IP Address</ControlLabel>
+            <FormControl type="text" size={15} maxLength={15} value={this.state.vlcAddress} onChange={this.updateVlcAddress}/>
             <FormControl.Feedback />
           </FormGroup>
           <FormGroup controlId="vlcRCPort" validationState={this.state.isVlcRCPortValid ? 'success' : 'error'}>
