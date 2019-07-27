@@ -10,6 +10,7 @@ from tinydb import TinyDB, Query
 
 from api.auth import needs_admin, needs_user, create_token, get_token_payload
 from api import camera
+from api import network
 from api import snapshot
 from api import vlc
 
@@ -248,7 +249,6 @@ def login():
 def change_password(user):
     info = request.get_json()
     password = info.get('password')
-    #import pdb;pdb.set_trace()
     return update_password(user, password)
 
 
@@ -314,6 +314,7 @@ def get_user(user):
 
     return jsonify(accounts.get(User.username == user))
 
+
 @app.route("/api/users", methods=['POST'])
 @needs_admin()
 def create_user():
@@ -348,14 +349,14 @@ def change_setting(user):
     info = request.get_json()
     password = info.get('password')
     admin = info.get('admin')
-    display = info.get('display_name')  
-    session = info.get('session')  
+    display = info.get('display_name')
+    session = info.get('session')
     if len(password) > 0:
         accounts.update({'password': password}, User.username == user)
     if len(display) > 0:
         accounts.update({'display_name': display}, User.username == user)
-    accounts.update({'admin': admin, 'session_duration': session}, 
-        User.username == user)
+    accounts.update({'admin': admin, 'session_duration': session},
+                    User.username == user)
     return jsonify('Success')
 
 
@@ -373,7 +374,7 @@ def change_my_setting():
 
     info = request.get_json()
     password = info.get('password')
-    display = info.get('display_name')    
+    display = info.get('display_name')
     if len(display) > 0:
         accounts.update({'display_name': display}, User.username == user)
     if len(password) > 0:
@@ -398,7 +399,7 @@ def update_camera_settings():
     ip_address = info['ip_address']
     ptz_port = int(info['ptz_port'])
 
-    if not camera.test_connection(ip_address, ptz_port):
+    if not network.test_connection(ip_address, ptz_port):
         abort(422, 'Invalid host, port combination')
 
     get_camera_settings()
