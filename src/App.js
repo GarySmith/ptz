@@ -292,7 +292,7 @@ class App extends Component {
             <div className={adminOptions} onClick={()=> this.sideButtonClicked("update")}>Update/Upload Image</div>
             <div className={loginView} onClick={()=> this.sideButtonClicked("login")}>Login</div>
 
-            <div className={userOptions} onClick={()=> this.sideButtonClicked("manageAccount")}>Manage Account</div>
+            <div className={userOptions} onClick={()=> this.sideButtonClicked("manageAccount")}>Manage Users</div>
             <div className={adminOptions} onClick={()=> this.sideButtonClicked("addUser")}>Add/Delete User</div>
             <div className="options" onClick={()=> this.sideButtonClicked("about")}>About</div>
             <div className={userOptions} onClick={()=> this.logoutClicked()}>Logout</div>

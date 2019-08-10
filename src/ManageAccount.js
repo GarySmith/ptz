@@ -33,7 +33,7 @@ class ManageAccount extends Component {
         .then(response => {
            for(let i = 0; i < response.length; i++) {
              if(response[i].admin) response[i].admin = "yes"
-             else response[i].admin = "no" 
+             else response[i].admin = "no"
            }
            this.setState({userList : response});
          })
@@ -95,13 +95,13 @@ class ManageAccount extends Component {
   submitClicked = (evt) => {
     let passLen = this.state.password.length;
     let displayLen = this.state.displayName.length;
-    
+
     if((passLen === 1 || passLen === 2) || displayLen === 1 || displayLen === 2) {
       this.setState({errorMessage: "Please make sure all entries are at least 3 characters long"});
     }
     else if(this.state.passConfirm !== this.state.password) {
       this.setState({errorMessage: "Passwords don't match"});
-    } 
+    }
     else if(this.state.sessionDuration < 1) {
       this.setState({errorMessage: "Session duration has to be one day or longer"});
     }
@@ -109,7 +109,7 @@ class ManageAccount extends Component {
       this.updateSettings()
     }
   }
-   
+
   createHash() {
     const crypto = require('crypto');
     const hmac = crypto.createHmac('sha256', this.state.password);
@@ -117,8 +117,8 @@ class ManageAccount extends Component {
     return (hmac.digest('hex'));
   }
   updateSettings() {
-    let hashedPassword = this.createHash(); 
-    if(this.state.isAdmin) { 
+    let hashedPassword = this.createHash();
+    if(this.state.isAdmin) {
       const body = JSON.stringify({user: this.state.searchedUser, admin: this.state.searchAdmin,
                                 display_name: this.state.displayName, password: hashedPassword,
                                 session: this.state.sessionDuration});
@@ -131,8 +131,8 @@ class ManageAccount extends Component {
           this.setState({errorMessage: 'Failed to change settings for ' + this.state.searchedUser});
         })
      }
-    else { 
-      const body = JSON.stringify({user: this.state.username,  
+    else {
+      const body = JSON.stringify({user: this.state.username,
                              display_name: this.state.displayName, password: hashedPassword});
       doFetch('api/users/settings', 'POST', body)
         .then(response => {
@@ -144,7 +144,7 @@ class ManageAccount extends Component {
         })
      }
   }
- 
+
   searchClicked = (evt) => {
     evt.preventDefault();
     doFetch('api/users/' + this.state.searchedUser, 'GET')
@@ -181,7 +181,7 @@ class ManageAccount extends Component {
             </tr>
           </thead>
           <tbody>
-           {this.createUserList()} 
+           {this.createUserList()}
           </tbody>
         </Table>
     return table;
@@ -206,7 +206,7 @@ class ManageAccount extends Component {
          <td>{session_duration}</td>
          <td>{admin}</td>
          </tr>
-        )    
+        )
      })
   }
 
@@ -217,12 +217,12 @@ class ManageAccount extends Component {
     let usernameLabel;
     let passwordFormGroup;
     let confirmPasswordFormGroup;
-    let displayFormGroup;   
+    let displayFormGroup;
     let sessionFormGroup;
     let submitButton;
     let table;
     let tableTest = this.createUserList();
-  
+
     if(this.state.isAdmin) {
         if(this.state.hasSearchedUser) {
           let isYourself = false;
@@ -230,9 +230,9 @@ class ManageAccount extends Component {
             isYourself = true;
           }
           usernameLabel = <ControlLabel>Username: {this.state.searchedUser}</ControlLabel>
-          changeRoleFormGroup = 
+          changeRoleFormGroup =
             <div><Checkbox inline onChange={this.updateBox.bind(this)} disabled={isYourself} checked = {this.state.searchAdmin}>Admin User</Checkbox></div>
-          sessionFormGroup = 
+          sessionFormGroup =
             <FormGroup controlId="formBasicText" validationState={this.getValidationState("session")}>
               <ControlLabel>Edit session duration (in days) </ControlLabel>
               <FormControl type="number" value={this.state.sessionDuration} onChange={this.updateSessionDuration.bind(this)} />
@@ -240,57 +240,56 @@ class ManageAccount extends Component {
             </FormGroup>
         }
         else {
-          searchUserForm = <form onSubmit={this.searchClicked}> 
+          searchUserForm = <form onSubmit={this.searchClicked}>
             <FormGroup controlId="formBasicText" validationState={this.getValidationState("searchedUser")}><ControlLabel>Search for a user</ControlLabel>
             <FormControl type="text" value={this.state.searchedUser} placeholder="Enter username" onChange = {this.updateUserSearch.bind(this)} />
             <FormControl.Feedback /></FormGroup>
-            <Button bsStyle="success" onClick={this.searchClicked}>Submit</Button>
           </form>
-           
+
            table = this.createTable();
         }
-     } 
+     }
      if(this.state.hasSearchedUser || !this.state.isAdmin) {
-        passwordFormGroup = 
+        passwordFormGroup =
           <FormGroup controlId="formBasicText" validationState={this.getValidationState("password")}>
             <ControlLabel>New Password</ControlLabel>
             <FormControl type="text" value={this.state.password} placeholder="Enter new password" onChange={this.updatePassword.bind(this)} />
             <FormControl.Feedback />
           </FormGroup>
 
-        confirmPasswordFormGroup = 
+        confirmPasswordFormGroup =
           <FormGroup controlId="formBasicText" validationState={this.getValidationState("confirmPass")}>
             <ControlLabel>Confirm New Password</ControlLabel>
             <FormControl type="text" value={this.state.passConfirm} placeholder="Enter new password" onChange={this.updatePassConfirm.bind(this)} />
             <FormControl.Feedback />
           </FormGroup>
-       
-         displayFormGroup = 
+
+         displayFormGroup =
           <FormGroup controlId="formBasicText" validationState={this.getValidationState("displayName")}>
             <ControlLabel>Change display name</ControlLabel>
             <FormControl type="text" value={this.state.displayName} placeholder="Enter new display name" onChange={this.updateDisplayName.bind(this)} />
             <FormControl.Feedback />
           </FormGroup>
-          
+
           submitButton = <Button bsStyle="success" onClick={this.submitClicked}>Submit</Button>
      }
     if(this.state.errorMessage[0] === 'C') {
         messageClass = "success";
     }
-    else { 
+    else {
         if(this.state.errorMessage.length > 0) messageClass = "error";
     }
     return (
       <div className="addUser">
         <div className="header">Manage Account</div>
-        {searchUserForm} 
+        {searchUserForm}
         <form onSubmit={this.submitClicked}>
           {usernameLabel}
           {displayFormGroup}
           {passwordFormGroup}
           {confirmPasswordFormGroup}
           {sessionFormGroup}
-          {changeRoleFormGroup}<p></p> 
+          {changeRoleFormGroup}<p></p>
           {submitButton}
         </form>
         <div className={messageClass}>{this.state.errorMessage}</div>
