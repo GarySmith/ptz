@@ -256,9 +256,20 @@ class App extends Component {
       addUser = (<AddUser admin={this.state.admin}/>);
     }
 
-    let welcomeMessage = "";
+    let upperRight;
     if(this.state.validLogin) {
-      welcomeMessage = "Hello, " + this.state.display_name;
+      if(this.state.currentView==='home') {
+        const welcomeMessage = "Hello, " + this.state.display_name;
+        upperRight = <div className="usermenu" onClick={this.iconClicked}>{welcomeMessage}</div>;
+      } else {
+        upperRight = (
+          <div className="usermenu">
+            <span className='home'>
+              <MaterialIcon icon="home" size='medium' color='white' onClick={() => this.sideButtonClicked("home")} />
+            </span>
+          </div>
+        );
+      }
     }
     let userOptions = "options hidden";
     let adminOptions= "options hidden";
@@ -279,17 +290,17 @@ class App extends Component {
             <div className={adminOptions} onClick={()=> this.sideButtonClicked("settings")}>Settings</div>
             <div className={adminOptions} onClick={()=> this.sideButtonClicked("calibrate")}>Calibrate</div>
             <div className={adminOptions} onClick={()=> this.sideButtonClicked("update")}>Update/Upload Image</div>
-            <div className="options" onClick={()=> this.sideButtonClicked("about")}>About</div>
             <div className={loginView} onClick={()=> this.sideButtonClicked("login")}>Login</div>
 
             <div className={userOptions} onClick={()=> this.sideButtonClicked("manageAccount")}>Manage Account</div>
             <div className={adminOptions} onClick={()=> this.sideButtonClicked("addUser")}>Add/Delete User</div>
+            <div className="options" onClick={()=> this.sideButtonClicked("about")}>About</div>
             <div className={userOptions} onClick={()=> this.logoutClicked()}>Logout</div>
 
           </div>
           <span className="hamburger" onClick={(e) => this.openNav()}>&#9776;</span>
           <div className="title">PTZ Camera Control</div>
-          <div className="usermenu" onClick={this.iconClicked}>{welcomeMessage}</div>
+          {upperRight}
         </div>
         <div className="middleView">
           {homeMenu}
