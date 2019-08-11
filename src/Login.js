@@ -37,10 +37,14 @@ class Login extends Component {
   }
 
   updateUser(evt) {
-    this.setState({triedUser: evt.target.value});
+    // Capture the target value, which may change by the time setState executes
+    const val = evt.target.value;
+    this.setState({triedUser: val});
   }
   updatePass(evt) {
-    this.setState({triedPass: evt.target.value});
+    // Capture the target value, which may change by the time setState executes
+    const val = evt.target.value;
+    this.setState({triedPass: val});
   }
 
   render() {
