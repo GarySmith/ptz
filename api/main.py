@@ -10,6 +10,7 @@ from tinydb import TinyDB, Query
 
 from api.auth import needs_admin, needs_user, create_token, get_token_payload
 from api import camera
+from api import network
 from api import snapshot
 from api import vlc
 
@@ -80,8 +81,7 @@ def get_vlc_settings():
     vlc = DB.table('vlc')
     settings = vlc.all()
     if (len(settings) < 1):
-        vlc.insert({'host': 'gary-laptop',
-                    'ip_address': '192.168.1.2',
+        vlc.insert({'address': '192.168.1.2',
                     'rc_port': 4200,
                     'share': 'scans'})
     return settings[0]
@@ -248,7 +248,6 @@ def login():
 def change_password(user):
     info = request.get_json()
     password = info.get('password')
-    #import pdb;pdb.set_trace()
     return update_password(user, password)
 
 
@@ -314,6 +313,7 @@ def get_user(user):
 
     return jsonify(accounts.get(User.username == user))
 
+
 @app.route("/api/users", methods=['POST'])
 @needs_admin()
 def create_user():
@@ -348,14 +348,14 @@ def change_setting(user):
     info = request.get_json()
     password = info.get('password')
     admin = info.get('admin')
-    display = info.get('display_name')  
-    session = info.get('session')  
+    display = info.get('display_name')
+    session = info.get('session')
     if len(password) > 0:
         accounts.update({'password': password}, User.username == user)
     if len(display) > 0:
         accounts.update({'display_name': display}, User.username == user)
-    accounts.update({'admin': admin, 'session_duration': session}, 
-        User.username == user)
+    accounts.update({'admin': admin, 'session_duration': session},
+                    User.username == user)
     return jsonify('Success')
 
 
@@ -373,7 +373,7 @@ def change_my_setting():
 
     info = request.get_json()
     password = info.get('password')
-    display = info.get('display_name')    
+    display = info.get('display_name')
     if len(display) > 0:
         accounts.update({'display_name': display}, User.username == user)
     if len(password) > 0:
@@ -394,12 +394,11 @@ def update_camera_settings():
 
     info = request.get_json()
 
-    # camera_settings = get_camera_settings()
     ip_address = info['ip_address']
     ptz_port = int(info['ptz_port'])
 
-    if not camera.test_connection(ip_address, ptz_port):
-        abort(422, 'Invalid host, port combination')
+    if not network.test_connection(ip_address, ptz_port):
+        abort(422, 'Unable to connect')
 
     get_camera_settings()
     camera_settings = DB.table('camera')
@@ -416,12 +415,33 @@ def get_vlc():
     return jsonify(get_vlc_settings())
 
 
+@app.route("/api/vlc", methods=['POST'])
+@needs_admin()
+def update_vlc_settings():
+
+    info = request.get_json()
+
+    address = info['address']
+    rc_port = int(info['rc_port'])
+    share = info['share']
+
+    if not network.test_connection(address, rc_port):
+        abort(422, 'Unable to connect to RC port')
+
+    vlc_settings = DB.table('vlc')
+    vlc_settings.update({
+        'address': address,
+        'rc_port': rc_port,
+        'share': share})
+    return jsonify("Success")
+
+
 @app.route("/api/vlc/is_playing", methods=['GET'])
 def is_playing():
 
     vlc_settings = get_vlc_settings()
 
-    return jsonify(vlc.is_playing(vlc_settings['ip_address'],
+    return jsonify(vlc.is_playing(vlc_settings['address'],
                                   vlc_settings['rc_port']))
 
 
@@ -431,7 +451,7 @@ def take_snapshot():
     vlc_settings = get_vlc_settings()
 
     try:
-        name = snapshot.take_snapshot(vlc_settings['ip_address'],
+        name = snapshot.take_snapshot(vlc_settings['address'],
                                       vlc_settings['share'],
                                       vlc_settings['rc_port'])
 
@@ -458,7 +478,7 @@ def update_preset_snapshot(preset):
     vlc_settings = get_vlc_settings()
 
     try:
-        name = snapshot.take_snapshot(vlc_settings['ip_address'],
+        name = snapshot.take_snapshot(vlc_settings['address'],
                                       vlc_settings['share'],
                                       vlc_settings['rc_port'])
         shutil.move(name, 'public/images/{0}.jpg'.format(preset))

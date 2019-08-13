@@ -235,6 +235,11 @@ body {
   top: 0px;
   color: white;
   font-size: 20px;
+
+  .home {
+    line-height: 70px;
+    cursor: pointer;
+  }
 }
 
 .logout {
