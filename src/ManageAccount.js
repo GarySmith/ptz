@@ -6,7 +6,6 @@ import { ControlLabel } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
 import { Checkbox } from 'react-bootstrap';
 import { Table } from 'react-bootstrap';
-import password from './password.js';
 import AddUser from './AddUser.js';
 
 class ManageAccount extends Component {

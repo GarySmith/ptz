@@ -5,7 +5,6 @@ import { FormControl } from 'react-bootstrap';
 import { ControlLabel } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
 import { Checkbox } from 'react-bootstrap';
-import password from './password.js';
 
 class AddUser extends Component {
   constructor(props) {
