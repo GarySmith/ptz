@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { doFetch } from './RestUtils.js';
 import { Button } from 'react-bootstrap';
-import password from './password.js';
 
 class Login extends Component {
   constructor(props) {
