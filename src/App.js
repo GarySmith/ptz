@@ -29,6 +29,7 @@ class App extends Component {
       display_name: '',
       dropDown: false,
       snapshotTimestamp: 0,  // time when snapshot taken (-1 == none available)
+      recording: null,
     };
   }
 
@@ -175,14 +176,12 @@ class App extends Component {
       menuclass+=" expanded";
     }
 
-
     let credentialsMenu;
     let settingsMenu;
     let calibrateMenu;
     let updateMenu;
     let homeMenu;
     let aboutMenu;
-    let presets_len = this.state.presets.length;
     let manageAccount;
     let addUser;
 
@@ -215,12 +214,29 @@ class App extends Component {
       } else if (this.state.snapshotTimestamp < 0) {
         img = (<img alt='snapshot' src={process.env.PUBLIC_URL + 'images/not_playing.png'} />);
       }
+
+      // Should actually highlight the button with a circle if it is known to be recording
+      let recordBtn;
+      if(this.state.validLogin) {
+        let recordColor = 'black';
+        if (this.state.recording) {
+          recordColor = 'red';
+        } else if (this.state.recording === false) {
+          recordColor = 'blue';
+        }
+        recordBtn = (
+            <span className='record'>
+              <MaterialIcon color={recordColor} icon="fiber_manual_record" size='large'/>
+            </span>
+        );
+      }
       homeMenu = (
           <React.Fragment>
             <div className='presetContainer'>
               {buttons}
             </div>
             <div className="snapshot">
+             {recordBtn}
               <span className='camera'>
                 <MaterialIcon icon="photo_camera" size='large' onClick={() => this.takeSnapshot()}/>
               </span>
@@ -243,7 +259,7 @@ class App extends Component {
       settingsMenu = (<Settings onComplete={this.initialLoadPresets}/>); //only admin
     }
     else if(this.state.currentView==='calibrate') {
-      calibrateMenu = (<Calibrate num_presets={presets_len} admin={this.state.admin} onComplete={this.initialLoadPresets}/>);  //only admin
+      calibrateMenu = (<Calibrate num_presets={this.state.presets.length} admin={this.state.admin} onComplete={this.initialLoadPresets}/>);  //only admin
     }
     else if(this.state.currentView==='update') {
       updateMenu = (<Update admin={this.state.admin}/>);  //only admin
@@ -262,10 +278,11 @@ class App extends Component {
         const welcomeMessage = "Hello, " + this.state.display_name;
         upperRight = <div className="usermenu" onClick={this.iconClicked}>{welcomeMessage}</div>;
       } else {
+        const color = 'white';
         upperRight = (
           <div className="usermenu">
             <span className='home'>
-              <MaterialIcon icon="home" size='medium' color='white' onClick={() => this.sideButtonClicked("home")} />
+              <MaterialIcon icon="home" size='medium' color={color} onClick={() => this.sideButtonClicked("home")} />
             </span>
           </div>
         );

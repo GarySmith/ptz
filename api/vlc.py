@@ -24,3 +24,17 @@ def take_snapshot(ip_address, port):
         network.send_bytes(s, b'snapshot\n')
         network.receive_bytes(s, maxlen=80, eom=b'\r\n')
         network.send_bytes(s, b'logout\n')
+
+
+def send_keypress(ip_address, port, keyname):
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((ip_address, port))
+
+        # Convert keyname to bytes if it is a string
+        #
+        network.send_bytes(s, b'is_playing\n')
+        resp = 'tombstone'
+        while len(resp) > 3:
+            resp = network.receive_bytes(s, maxlen=80, eom=b'\r\n')
+        network.send_bytes(s, b'logout\n')

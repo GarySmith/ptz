@@ -41,6 +41,9 @@ body {
   flex-direction: row;
   justify-content: flex-start;
 }
+.record {
+  cursor: pointer;
+}
 .camera {
   cursor: pointer;
   margin-right: 3px;
