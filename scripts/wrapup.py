@@ -72,7 +72,8 @@ files = [os.path.join(RECORDINGS_DIR, f)
          for f in os.listdir(RECORDINGS_DIR) if today in f]
 
 config = None
-config_file = os.path.join(os.path.dirname(__file__), 'config.json')
+config_file = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), 'config.json')
 try:
     with open(config_file) as f:
         config = yaml.safe_load(f)
