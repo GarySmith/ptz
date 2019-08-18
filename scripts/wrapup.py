@@ -2,7 +2,7 @@
 
 import datetime
 import os
-import subprocess
+from subprocess import run, Popen, PIPE
 import sys
 import vimeo
 import yaml
@@ -19,9 +19,52 @@ import yaml
 # multiple times and only perform those steps that have not already been
 # completed
 
+
+LOG = None
+# logged = ''
+
+
+def log(*args):
+    global LOG
+    prepend_lf = True
+    if LOG is None:
+        command = ['/usr/bin/zenity', '--text-info',
+                   '--width', '800',
+                   '--height', '300',
+                   '--title', 'Progress...']
+        LOG = Popen(command, stdin=PIPE)
+        prepend_lf = False
+
+    if prepend_lf:
+        LOG.stdin.write(b'\n')
+
+    for arg in args:
+        LOG.stdin.write(bytes(arg, 'utf-8'))
+        LOG.stdin.flush()
+
+
+def zenity(*args, **kwargs):
+    command = ['/usr/bin/zenity']
+    if args:
+        command.extend(args)
+
+    proc = Popen(command, stdout=PIPE, stderr=PIPE)
+    (out, errs) = proc.communicate()
+    if proc.returncode != 0:
+        raise Exception()
+
+    return (out.decode('utf-8').rstrip(), errs.decode('utf-8').rstrip())
+
+
+def die(return_code=0):
+    if LOG:
+        LOG.kill()
+
+    sys.exit(return_code)
+
+
 RECORDINGS_DIR = os.path.join(os.path.expanduser('~'), 'Videos')
 SERVICES_DIR = os.path.join(os.path.expanduser('~'), 'Dropbox', 'Services')
-
 today = datetime.datetime.now().strftime('%Y-%m-%d')
 video = os.path.join(RECORDINGS_DIR, today + '.mp4')
 
@@ -34,8 +77,10 @@ try:
     with open(config_file) as f:
         config = yaml.safe_load(f)
 except Exception as e:
-    print('Unable to load config.json', e)
-    sys.exit(1)
+    zenity('--error', '--no-wrap',
+           '--ok-label', 'Exit',
+           '--text', '\n'.join(['Unable to load config.json', str(e)]))
+    die()
 
 # Convert the filename from the cryptic version that VLC creates,
 #   vlc-record-DATE-blah-blah
@@ -46,34 +91,49 @@ for f in files:
         original = f
         break
 
+
 if original:
     if video in files:
-        resp = input('Overwrite %s with %s? [Y] ' % (video, original))
-        if resp is None or resp[0].upper() == 'Y':
-            print('Renaming %s to %s' % (original, video))
+        try:
+            zenity("--question", "--no-wrap",
+                   "--text", 'Overwrite %s with %s?' % (video, original))
+            log('Renaming %s to %s' % (original, video))
             os.rename(original, video)
+
+        except Exception:
+            pass
     else:
-        print('Renaming %s to %s' % (original, video))
+        log('Renaming %s to %s' % (original, video))
         os.rename(original, video)
 
 elif video not in files:
-    print('No recording found for today, '+today)
-    sys.exit(1)
+    zenity('--error', '--no-wrap',
+           '--ok-label', 'Exit',
+           '--text', 'No recording found for today, '+today)
+    die()
 else:
-    print('Video recording is already named correctly')
+    log('Video recording is already named correctly')
 
 
 # Get the description of the service before all of the long-running tasks
-description = input('Description: ')
+try:
+    out, _ = zenity('--title', 'Video Description',
+                    '--entry',
+                    '--width', '800',
+                    '--text', 'Description of the video to show in Vimeo')
+except Exception:
+    die()
+
+description = out
 
 #
 # Extract the audio into its own file by using the Convert functions of VLC
 #
 audio = os.path.join(SERVICES_DIR, today + '.mp3')
 if os.path.exists(audio):
-    print("Audio has already been extracted from video")
+    log("Audio has already been extracted from video")
 else:
-    print("Extracting audio from video recording")
+    log("Extracting audio from video recording")
     command = [
         # Note: cvlc runs withuot the GUI
         '/usr/bin/vlc',
@@ -83,7 +143,7 @@ else:
         ':std{access=file,mux=raw,dst=%s}' % (audio),
         video,
         'vlc://quit']
-    subprocess.run(command)
+    run(command)
 
 # Upload the file to vimeo.
 #  If it already exists, prompt to override
@@ -101,14 +161,18 @@ response = client.get('/me/videos', params={'per_page': 1,
                                             'query': today}).json()
 
 if response['total'] > 0:
-    resp = input('%s has already been uploaded. Overwrite? [Y] ' % (today))
-
-    video_uri = response['data'][0]['uri']
-    if resp is None or resp[0].upper() == 'Y':
-        print("Uploading replacement video")
+    try:
+        video_uri = response['data'][0]['uri']
+        zenity("--question", "--no-wrap",
+               "--text",
+               '%s has already been uploaded. Overwrite?' % (today))
+        log("Uploading replacement video")
         client.replace(video_uri=video_uri, filename=video)
+    except Exception:
+        pass
+
 else:
-    print("Uploading video.  This will take a while...")
+    log("Uploading video.  This will take a while...")
     video_uri = client.upload(video, data={
         'name': today,
         'description': description,
@@ -129,11 +193,12 @@ channel_video_uri = response.json()['uri'] + video_uri
 # See if the video is already in the services channel
 response = client.get(channel_video_uri, params={'fields': 'uri'})
 if response.status_code == 200:
-    print("Video is already in the Services channel")
+    log("Video is already in the Services channel")
 else:
-    print("Adding video to the Services channel")
+    log("Adding video to the Services channel")
     response = client.put(channel_video_uri)
     response.raise_for_status()
 
-    print('Video added to Services channel')
+    log('Video added to Services channel')
 
+die(0)
