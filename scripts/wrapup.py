@@ -20,29 +20,6 @@ import yaml
 # completed
 
 
-LOG = None
-# logged = ''
-
-
-def log(*args):
-    global LOG
-    prepend_lf = True
-    if LOG is None:
-        command = ['/usr/bin/zenity', '--text-info',
-                   '--width', '800',
-                   '--height', '300',
-                   '--title', 'Progress...']
-        LOG = Popen(command, stdin=PIPE)
-        prepend_lf = False
-
-    if prepend_lf:
-        LOG.stdin.write(b'\n')
-
-    for arg in args:
-        LOG.stdin.write(bytes(arg, 'utf-8'))
-        LOG.stdin.flush()
-
-
 def zenity(*args, **kwargs):
     command = ['/usr/bin/zenity']
     if args:
@@ -54,13 +31,6 @@ def zenity(*args, **kwargs):
         raise Exception()
 
     return (out.decode('utf-8').rstrip(), errs.decode('utf-8').rstrip())
-
-
-def die(return_code=0):
-    if LOG:
-        LOG.kill()
-
-    sys.exit(return_code)
 
 
 RECORDINGS_DIR = os.path.join(os.path.expanduser('~'), 'Videos')
@@ -81,7 +51,7 @@ except Exception as e:
     zenity('--error', '--no-wrap',
            '--ok-label', 'Exit',
            '--text', '\n'.join(['Unable to load config.json', str(e)]))
-    die()
+    sys.exit(1)
 
 # Convert the filename from the cryptic version that VLC creates,
 #   vlc-record-DATE-blah-blah
@@ -98,22 +68,22 @@ if original:
         try:
             zenity("--question", "--no-wrap",
                    "--text", 'Overwrite %s with %s?' % (video, original))
-            log('Renaming %s to %s' % (original, video))
+            print('Renaming %s to %s' % (original, video))
             os.rename(original, video)
 
         except Exception:
             pass
     else:
-        log('Renaming %s to %s' % (original, video))
+        print('Renaming %s to %s' % (original, video))
         os.rename(original, video)
 
 elif video not in files:
     zenity('--error', '--no-wrap',
            '--ok-label', 'Exit',
            '--text', 'No recording found for today, '+today)
-    die()
+    sys.exit(1)
 else:
-    log('Video recording is already named correctly')
+    print('Video recording is already named correctly')
 
 
 # Get the description of the service before all of the long-running tasks
@@ -123,7 +93,7 @@ try:
                     '--width', '800',
                     '--text', 'Description of the video to show in Vimeo')
 except Exception:
-    die()
+    sys.exit(1)
 
 description = out
 
@@ -132,9 +102,9 @@ description = out
 #
 audio = os.path.join(SERVICES_DIR, today + '.mp3')
 if os.path.exists(audio):
-    log("Audio has already been extracted from video")
+    print("Audio has already been extracted from video")
 else:
-    log("Extracting audio from video recording")
+    print("Extracting audio from video recording")
     command = [
         # Note: cvlc runs withuot the GUI
         '/usr/bin/vlc',
@@ -167,13 +137,13 @@ if response['total'] > 0:
         zenity("--question", "--no-wrap",
                "--text",
                '%s has already been uploaded. Overwrite?' % (today))
-        log("Uploading replacement video")
+        print("Uploading replacement video")
         client.replace(video_uri=video_uri, filename=video)
     except Exception:
         pass
 
 else:
-    log("Uploading video.  This will take a while...")
+    print("Uploading video.  This will take a while...")
     video_uri = client.upload(video, data={
         'name': today,
         'description': description,
@@ -194,12 +164,14 @@ channel_video_uri = response.json()['uri'] + video_uri
 # See if the video is already in the services channel
 response = client.get(channel_video_uri, params={'fields': 'uri'})
 if response.status_code == 200:
-    log("Video is already in the Services channel")
+    print("Video is already in the Services channel")
 else:
-    log("Adding video to the Services channel")
+    print("Adding video to the Services channel")
     response = client.put(channel_video_uri)
     response.raise_for_status()
 
-    log('Video added to Services channel')
+    print('Video added to Services channel')
 
-die(0)
+message = "Wrapup complete"
+print(message)
+zenity("--info", "--no-wrap", "--text", message)
