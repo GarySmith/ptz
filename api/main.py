@@ -11,7 +11,7 @@ from tinydb import TinyDB, Query
 from api.auth import needs_admin, needs_user, create_token, get_token_payload
 from api import camera
 from api import network
-from api import snapshot
+from api import system
 from api import vlc
 
 LOG_FILENAME = 'ptz.log'
@@ -451,9 +451,9 @@ def take_snapshot():
     vlc_settings = get_vlc_settings()
 
     try:
-        name = snapshot.take_snapshot(vlc_settings['address'],
-                                      vlc_settings['share'],
-                                      vlc_settings['rc_port'])
+        name = system.take_snapshot(vlc_settings['address'],
+                                    vlc_settings['share'],
+                                    vlc_settings['rc_port'])
 
         # In order to avoid cluttering up /tmp with snapshots, remove
         # the file after it is streamed.  As suggested in
@@ -478,11 +478,29 @@ def update_preset_snapshot(preset):
     vlc_settings = get_vlc_settings()
 
     try:
-        name = snapshot.take_snapshot(vlc_settings['address'],
-                                      vlc_settings['share'],
-                                      vlc_settings['rc_port'])
+        name = system.take_snapshot(vlc_settings['address'],
+                                    vlc_settings['share'],
+                                    vlc_settings['rc_port'])
         shutil.move(name, 'public/images/{0}.jpg'.format(preset))
         return jsonify("Success")
+
+    except Exception as e:
+        abort(500, str(e))
+
+
+@app.route("/api/vlc/keypress/<string:keyname>", methods=['POST'])
+@needs_admin()
+def send_keypress(keyname):
+
+    vlc_settings = get_vlc_settings()
+
+    try:
+        if not keyname.startswith('key-'):
+            keyname = 'key-' + keyname
+        vlc.send_keypress(vlc_settings['address'],
+                          vlc_settings['rc_port'],
+                          keyname)
+        return jsonify('Success')
 
     except Exception as e:
         abort(500, str(e))

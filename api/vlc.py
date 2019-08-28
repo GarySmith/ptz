@@ -32,9 +32,5 @@ def send_keypress(ip_address, port, keyname):
         s.connect((ip_address, port))
 
         # Convert keyname to bytes if it is a string
-        #
-        network.send_bytes(s, b'is_playing\n')
-        resp = 'tombstone'
-        while len(resp) > 3:
-            resp = network.receive_bytes(s, maxlen=80, eom=b'\r\n')
-        network.send_bytes(s, b'logout\n')
+        command = f'key {keyname}\nlogout\n'
+        network.send_bytes(s, bytes(command, 'utf-8'))
