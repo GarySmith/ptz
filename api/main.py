@@ -83,7 +83,9 @@ def get_vlc_settings():
     if (len(settings) < 1):
         vlc.insert({'address': '192.168.1.2',
                     'rc_port': 4200,
-                    'share': 'scans'})
+                    'user': 'gary',
+                    'dir': 'scans',
+                    })
     return settings[0]
 
 
@@ -423,7 +425,8 @@ def update_vlc_settings():
 
     address = info['address']
     rc_port = int(info['rc_port'])
-    share = info['share']
+    user = info['user']
+    snap_dir = info['dir']
 
     if not network.test_connection(address, rc_port):
         abort(422, 'Unable to connect to RC port')
@@ -432,7 +435,9 @@ def update_vlc_settings():
     vlc_settings.update({
         'address': address,
         'rc_port': rc_port,
-        'share': share})
+        'user': user,
+        'dir': snap_dir,
+    })
     return jsonify("Success")
 
 
@@ -452,8 +457,9 @@ def take_snapshot():
 
     try:
         name = system.take_snapshot(vlc_settings['address'],
-                                    vlc_settings['share'],
-                                    vlc_settings['rc_port'])
+                                    vlc_settings['rc_port'],
+                                    vlc_settings['user'],
+                                    vlc_settings['dir'])
 
         # In order to avoid cluttering up /tmp with snapshots, remove
         # the file after it is streamed.  As suggested in
@@ -479,8 +485,9 @@ def update_preset_snapshot(preset):
 
     try:
         name = system.take_snapshot(vlc_settings['address'],
-                                    vlc_settings['share'],
-                                    vlc_settings['rc_port'])
+                                    vlc_settings['rc_port'],
+                                    vlc_settings['user'],
+                                    vlc_settings['dir'])
         shutil.move(name, 'public/images/{0}.jpg'.format(preset))
         return jsonify("Success")
 

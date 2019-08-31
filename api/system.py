@@ -1,10 +1,7 @@
-import ipaddress
-import platform
+import os
+import paramiko
 import tempfile
 import time
-from smb.SMBConnection import SMBConnection
-from smb import smb_constants as smbc
-from nmb.NetBIOS import NetBIOS
 from . import vlc
 
 # Prerequisites:
@@ -24,28 +21,32 @@ from . import vlc
 #   + Video snapshot height: 110
 
 
-def get_host_ip(host_or_ip):
-    have_ip = False
-    try:
-        ipaddress.ip_address(host_or_ip)
-        have_ip = True
-    except ValueError:
-        pass
+def connect_sftp(host, user):
 
-    nb = NetBIOS()
-    if have_ip:
-        ip_addr = host_or_ip
-        host = nb.queryIPForName(ip_addr)[0]
+    port = 22
+
+    # If there is an agent running, get the key from there, falling back
+    # to ~/.ssh/id_rsa
+    agent = paramiko.agent.Agent()
+    keys = agent.get_keys()
+    if len(keys) > 0:
+        key = keys[0]
     else:
-        host = host_or_ip
-        ip_addr = nb.queryName(host)[0]
+        key = paramiko.RSAKey.from_private_key_file(
+            os.path.expanduser("~/.ssh/id_rsa"))
 
-    nb.close()
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(hostname=host,
+                username=user,
+                port=port,
+                pkey=key)
+    sftp = ssh.open_sftp()
+    sftp.sshclient = ssh
+    return sftp
 
-    return host, ip_addr
 
-
-def take_snapshot(host_or_ip, share, rc_port, delete_after=True):
+def take_snapshot(host, rc_port, user, snap_dir, delete_after=True):
     """Take snapshot of the current vlc video feed
 
     Use the remote control interface on the camera to capture a
@@ -60,44 +61,42 @@ def take_snapshot(host_or_ip, share, rc_port, delete_after=True):
     Returns the filename on the server of the captured snapshot
     """
 
-    host, ip_addr = get_host_ip(host_or_ip)
+    is_playing = False
+    try:
+        is_playing = vlc.is_playing(host, rc_port)
+    except Exception as e:
+        raise Exception('Unable to connect to VLC')
 
-    if not vlc.is_playing(ip_addr, rc_port):
+    if not is_playing:
         raise Exception('VLC is not playing')
 
     # Connect to vlc and issue snapshot command
-    vlc.take_snapshot(ip_addr, rc_port)
+    vlc.take_snapshot(host, rc_port)
 
-    conn = SMBConnection('', '', platform.node(), host)
-    assert conn.connect(ip_addr)
+    conn = connect_sftp(host, user)
+    conn.chdir(snap_dir)
 
-    shares = conn.listShares()
-    names = [s.name for s in shares]
-    if share not in names:
-        raise Exception('%s not found on %s' % (share, host))
-
-    file_list = sorted(conn.listPath(share, '/',
-                                     smbc.SMB_FILE_ATTRIBUTE_NORMAL),
-                       key=lambda f: f.last_write_time, reverse=True)
+    images = [f for f in conn.listdir_attr('.')
+              if f.filename.lower().split('.')[-1] in ('jpg', 'jpeg')]
+    file_list = sorted(images, key=lambda f: f.st_mtime, reverse=True)
 
     if not file_list:
         raise Exception('There are no snapshots available')
 
     file = file_list[0]
-    if time.time() - file.last_write_time > 60:
+    if time.time() - file.st_mtime > 60:
         raise Exception('There are no recent snapshots available')
-
-    file_lower = file.filename.lower()
-    if not (file_lower.endswith('.jpg') or file_lower.endswith('.jpeg')):
-        raise Exception('The newest file is not a snapshot')
 
     with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as fp:
         filename = fp.name
-        attributes, size = conn.retrieveFile(share, file.filename, fp)
+        conn.getfo(file.filename, fp)
 
     if delete_after:
         # Delete the file from the remote system (where VLC runs) to avoid
         # leaving lots of files lying around
-        conn.deleteFiles(share, file.filename)
+        conn.remove(file.filename)
+
+    if conn is not None:
+        conn.close()
 
     return filename
