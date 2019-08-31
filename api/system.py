@@ -4,8 +4,7 @@ from . import network
 from . import vlc
 
 # Prerequisites:
-# - Create a new directory for snapshots, and share it (over SMB/Windows
-#   sharing) without password
+# - Create new directories for snapshots and, if necessary, for videos
 # - enable the remote control interface in VLS (launch with vlc --intf rc, or
 #   Preferences > Interface > Main interfaces > Remote control interface
 # - Allocate a fake TTY
@@ -13,8 +12,8 @@ from . import vlc
 # - Assign a port to the RC interface
 #   Preferences > Interface > Main interfaces > RC > TCP command input
 #    e.g. 0.0.0.0:4200
-# - enable video snapshots (Preferences > Video)
-#   + Snapshot directory: (pick dir that was shared above)
+# - enable video snapshots (Advanced Preferences > Video)
+#   + Snapshot directory: (pick dir that was created above)
 #   + Format: jpg
 #   + Video snapshot width: 200
 #   + Video snapshot height: 110
