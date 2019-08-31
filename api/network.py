@@ -102,13 +102,15 @@ def connect_sftp(host, user):
     return sftp
 
 
-def test_sftp_connection(host, user, directory):
+def test_sftp_connection(host, user, *directories):
 
     conn = connect_sftp(host, user)
 
+    d = None
     try:
-        conn.chdir(directory)
-    except IOError as e:
-        raise Exception("No such directory")
+        for d in directories:
+            conn.listdir(d)
+    except IOError:
+        raise Exception("%s: No such directory" % d)
     finally:
         conn.close()

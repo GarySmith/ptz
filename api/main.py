@@ -84,7 +84,8 @@ def get_vlc_settings():
         vlc.insert({'address': '192.168.1.2',
                     'rc_port': 4200,
                     'user': 'gary',
-                    'dir': 'scans',
+                    'snapshot_dir': 'scans',
+                    'video_dir': 'Videos',
                     })
     return settings[0]
 
@@ -426,13 +427,14 @@ def update_vlc_settings():
     address = info['address']
     rc_port = int(info['rc_port'])
     user = info['user']
-    snap_dir = info['dir']
+    snapshot_dir = info['snapshot_dir']
+    video_dir = info['video_dir']
 
     if not network.test_connection(address, rc_port):
         abort(422, 'Unable to connect to RC port')
 
     try:
-        network.test_sftp_connection(address, user, snap_dir)
+        network.test_sftp_connection(address, user, snapshot_dir, video_dir)
     except Exception as e:
         abort(422, str(e))
 
@@ -441,7 +443,8 @@ def update_vlc_settings():
         'address': address,
         'rc_port': rc_port,
         'user': user,
-        'dir': snap_dir,
+        'snapshot_dir': snapshot_dir,
+        'video_dir': video_dir,
     })
     return jsonify("Success")
 
@@ -464,7 +467,7 @@ def take_snapshot():
         name = system.take_snapshot(vlc_settings['address'],
                                     vlc_settings['rc_port'],
                                     vlc_settings['user'],
-                                    vlc_settings['dir'])
+                                    vlc_settings['snapshot_dir'])
 
         # In order to avoid cluttering up /tmp with snapshots, remove
         # the file after it is streamed.  As suggested in
@@ -492,7 +495,7 @@ def update_preset_snapshot(preset):
         name = system.take_snapshot(vlc_settings['address'],
                                     vlc_settings['rc_port'],
                                     vlc_settings['user'],
-                                    vlc_settings['dir'])
+                                    vlc_settings['snapshot_dir'])
         shutil.move(name, 'public/images/{0}.jpg'.format(preset))
         return jsonify("Success")
 
