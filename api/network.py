@@ -1,3 +1,5 @@
+import os
+import paramiko
 import socket
 
 # Enable debugging the network traffic with print statements.  These
@@ -73,3 +75,40 @@ def debug_print(msg=None, display_text=False, end='\n'):
         print('', end=end, flush=True)
     else:
         print(msg, end=end, flush=True)
+
+
+def connect_sftp(host, user):
+
+    port = 22
+
+    # If there is an agent running, get the key from there, falling back
+    # to ~/.ssh/id_rsa
+    agent = paramiko.agent.Agent()
+    keys = agent.get_keys()
+    if len(keys) > 0:
+        key = keys[0]
+    else:
+        key = paramiko.RSAKey.from_private_key_file(
+            os.path.expanduser("~/.ssh/id_rsa"))
+
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(hostname=host,
+                username=user,
+                port=port,
+                pkey=key)
+    sftp = ssh.open_sftp()
+    sftp.sshclient = ssh
+    return sftp
+
+
+def test_sftp_connection(host, user, directory):
+
+    conn = connect_sftp(host, user)
+
+    try:
+        conn.chdir(directory)
+    except IOError as e:
+        raise Exception("No such directory")
+    finally:
+        conn.close()

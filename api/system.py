@@ -1,7 +1,6 @@
-import os
-import paramiko
 import tempfile
 import time
+from . import network
 from . import vlc
 
 # Prerequisites:
@@ -19,31 +18,6 @@ from . import vlc
 #   + Format: jpg
 #   + Video snapshot width: 200
 #   + Video snapshot height: 110
-
-
-def connect_sftp(host, user):
-
-    port = 22
-
-    # If there is an agent running, get the key from there, falling back
-    # to ~/.ssh/id_rsa
-    agent = paramiko.agent.Agent()
-    keys = agent.get_keys()
-    if len(keys) > 0:
-        key = keys[0]
-    else:
-        key = paramiko.RSAKey.from_private_key_file(
-            os.path.expanduser("~/.ssh/id_rsa"))
-
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(hostname=host,
-                username=user,
-                port=port,
-                pkey=key)
-    sftp = ssh.open_sftp()
-    sftp.sshclient = ssh
-    return sftp
 
 
 def take_snapshot(host, rc_port, user, snap_dir, delete_after=True):
@@ -73,7 +47,7 @@ def take_snapshot(host, rc_port, user, snap_dir, delete_after=True):
     # Connect to vlc and issue snapshot command
     vlc.take_snapshot(host, rc_port)
 
-    conn = connect_sftp(host, user)
+    conn = network.connect_sftp(host, user)
     conn.chdir(snap_dir)
 
     images = [f for f in conn.listdir_attr('.')

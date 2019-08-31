@@ -431,6 +431,11 @@ def update_vlc_settings():
     if not network.test_connection(address, rc_port):
         abort(422, 'Unable to connect to RC port')
 
+    try:
+        network.test_sftp_connection(address, user, snap_dir)
+    except Exception as e:
+        abort(422, str(e))
+
     vlc_settings = DB.table('vlc')
     vlc_settings.update({
         'address': address,

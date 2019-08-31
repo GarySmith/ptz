@@ -14,7 +14,8 @@ class Settings extends Component {
 
         vlcAddress: '',
         vlcRCPort: '',
-        vlcSharename: '',
+        vlcDir: '',
+        vlcUser: '',
 
         isVlcAddressValid: true,
         isVlcRCPortValid: true,
@@ -34,7 +35,8 @@ class Settings extends Component {
       this.setState({
         vlcAddress: response.address,
         vlcRCPort: response.rc_port,
-        vlcSharename: response.share,
+        vlcDir: response.dir,
+        vlcUser: response.user,
       });
     })
   }
@@ -67,9 +69,14 @@ class Settings extends Component {
     this.setState({vlcRCPort: val, isVlcRCPortValid: portValid});
   }
 
-  updateVlcSharename = (evt) => {
+  updateVlcDir = (evt) => {
     const val = evt.target.value;
-    this.setState({vlcSharename: val});
+    this.setState({vlcDir: val});
+  }
+
+  updateVlcUser = (evt) => {
+    const val = evt.target.value;
+    this.setState({vlcUser: val});
   }
 
   onSubmitCamera = (evt) => {
@@ -92,7 +99,8 @@ class Settings extends Component {
     doFetch('/api/vlc', 'POST', JSON.stringify({
       address :this.state.vlcAddress,
       rc_port :this.state.vlcRCPort,
-      share: this.state.vlcSharename,
+      dir: this.state.vlcDir,
+      user: this.state.vlcUser,
     }))
     .then(response => {
         console.log("Updated VLC information");
@@ -136,9 +144,14 @@ class Settings extends Component {
             <FormControl type="number" min={1} max={65535} size={5} value={this.state.vlcRCPort} onChange={this.updateVlcRcPort}/>
             <FormControl.Feedback />
           </FormGroup>
-          <FormGroup controlId="VLCSharename" validationState='success'>
-            <ControlLabel>Share name (for camera snapshots)</ControlLabel>
-            <FormControl type="text" size={25} maxLength={25} value={this.state.vlcSharename} onChange={this.updateVlcSharename}/>
+          <FormGroup controlId="VLCDir" validationState='success'>
+            <ControlLabel>Directory (for camera snapshots)</ControlLabel>
+            <FormControl type="text" size={25} maxLength={25} value={this.state.vlcDir} onChange={this.updateVlcDir}/>
+            <FormControl.Feedback />
+          </FormGroup>
+          <FormGroup controlId="VLCUser" validationState='success'>
+            <ControlLabel>SSH User (for camera snapshots)</ControlLabel>
+            <FormControl type="text" size={25} maxLength={25} value={this.state.vlcUser} onChange={this.updateVlcUser}/>
             <FormControl.Feedback />
           </FormGroup>
           <Button type="submit" bsStyle="success" disabled={! enableSubmitVLC} onClick={this.onSubmitVLC}>Submit</Button>
