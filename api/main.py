@@ -458,6 +458,21 @@ def is_playing():
                                   vlc_settings['rc_port']))
 
 
+@app.route("/api/vlc/is_recording", methods=['GET'])
+def is_recording():
+
+    vlc_settings = get_vlc_settings()
+
+    if not vlc.is_playing(vlc_settings['address'],
+                          vlc_settings['rc_port']):
+        return jsonify(False)
+
+    recording = system.is_video_capturing(vlc_settings['address'],
+                                          vlc_settings['user'],
+                                          vlc_settings['video_dir'])
+    return jsonify(recording)
+
+
 @app.route("/api/vlc/snapshot", methods=['GET'])
 def take_snapshot():
 

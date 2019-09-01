@@ -49,6 +49,9 @@ class App extends Component {
   }
 
   takeSnapshot = () => {
+    if(!this.state.validLogin) {
+      return;
+    }
     if (this.snapshotTimer) {
       console.log('snapshot is already being shown. Taking a new one');
       clearTimeout(this.snapshotTimer);
@@ -98,6 +101,17 @@ class App extends Component {
       this.setState(newState);
     });
   }
+
+  recordPressed = () => {
+    if(!this.state.validLogin) {
+      return;
+    }
+    doFetch('/api/vlc/keypress/record', 'POST')
+    .then(response => {
+      this.setState(prev => ({ recording: !prev.recording}))
+    })
+  }
+
 
   checkLogin = () => {
     const cookies = new Cookies();
@@ -215,30 +229,35 @@ class App extends Component {
         img = (<img alt='snapshot' src={process.env.PUBLIC_URL + 'images/not_playing.png'} />);
       }
 
-      // Should actually highlight the button with a circle if it is known to be recording
-      let recordBtn;
+      const cameraColor = this.state.validLogin ? 'black' : 'gray';
+
+      let recordColor = 'gray';
       if(this.state.validLogin) {
-        let recordColor = 'black';
+        recordColor = 'black';
         if (this.state.recording) {
           recordColor = 'red';
         } else if (this.state.recording === false) {
-          recordColor = 'blue';
+          recordColor = 'white';
         }
-        recordBtn = (
-            <span className='record'>
-              <MaterialIcon color={recordColor} icon="fiber_manual_record" size='large'/>
-            </span>
-        );
       }
+      console.log("Record button color", recordColor);
+      let recordingBtn;
+      if (this.state.recording) {
+        recordingBtn = <span className='inner'><MaterialIcon color={'red'} icon="fiber_manual_record" size='small' onClick={() => this.recordPressed()} /></span>;
+      }
+
       homeMenu = (
           <React.Fragment>
             <div className='presetContainer'>
               {buttons}
             </div>
             <div className="snapshot">
-             {recordBtn}
+              <div className='record'>
+                  <span className='outer'><MaterialIcon color={recordColor} icon="fiber_manual_record" size='large' onClick={() => this.recordPressed()} /></span>
+                  {recordingBtn}
+              </div>
               <span className='camera'>
-                <MaterialIcon icon="photo_camera" size='large' onClick={() => this.takeSnapshot()}/>
+                <MaterialIcon color={cameraColor} icon="photo_camera" size='large' onClick={() => this.takeSnapshot()}/>
               </span>
               {img}
             </div>
