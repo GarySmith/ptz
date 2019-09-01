@@ -11,7 +11,12 @@ import { doFetch } from './RestUtils.js';
 import ReactTimeout from 'react-timeout';
 import ManageAccount from './ManageAccount.js';
 import AddUser from './AddUser.js';
-import MaterialIcon from 'material-icons-react';
+import FiberManualRecord from '@material-ui/icons/FiberManualRecord';
+import PhotoCamera from '@material-ui/icons/PhotoCamera';
+import Home from '@material-ui/icons/Home';
+
+// import MaterialIcon from 'material-icons-react';
+// import MaterialIcon from '@material/react-material-icon';
 
 class App extends Component {
   constructor(props) {
@@ -240,10 +245,11 @@ class App extends Component {
           recordColor = 'white';
         }
       }
-      console.log("Record button color", recordColor);
       let recordingBtn;
       if (this.state.recording) {
-        recordingBtn = <span className='inner'><MaterialIcon color={'red'} icon="fiber_manual_record" size='small' onClick={() => this.recordPressed()} /></span>;
+        recordingBtn = (
+            <FiberManualRecord className='inner recording' onClick={() => this.recordPressed()} />
+        );
       }
 
       homeMenu = (
@@ -253,12 +259,10 @@ class App extends Component {
             </div>
             <div className="snapshot">
               <div className='record'>
-                  <span className='outer'><MaterialIcon color={recordColor} icon="fiber_manual_record" size='large' onClick={() => this.recordPressed()} /></span>
+                <FiberManualRecord className='outer' onClick={() => this.recordPressed()}/>
                   {recordingBtn}
               </div>
-              <span className='camera'>
-                <MaterialIcon color={cameraColor} icon="photo_camera" size='large' onClick={() => this.takeSnapshot()}/>
-              </span>
+              <PhotoCamera className='camera' onClick={() => this.takeSnapshot()} />
               {img}
             </div>
           </React.Fragment>
@@ -297,12 +301,9 @@ class App extends Component {
         const welcomeMessage = "Hello, " + this.state.display_name;
         upperRight = <div className="usermenu" onClick={this.iconClicked}>{welcomeMessage}</div>;
       } else {
-        const color = 'white';
         upperRight = (
           <div className="usermenu">
-            <span className='home'>
-              <MaterialIcon icon="home" size='medium' color={color} onClick={() => this.sideButtonClicked("home")} />
-            </span>
+              <Home className='home' onClick={() => this.sideButtonClicked("home")} />
           </div>
         );
       }
