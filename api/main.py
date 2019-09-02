@@ -524,6 +524,10 @@ def send_keypress(keyname):
 
     vlc_settings = get_vlc_settings()
 
+    if not vlc.is_playing(vlc_settings['address'],
+                          vlc_settings['rc_port']):
+        abort(422, 'VLC is not ready to record')
+
     try:
         if not keyname.startswith('key-'):
             keyname = 'key-' + keyname

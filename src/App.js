@@ -41,6 +41,11 @@ class App extends Component {
   componentDidMount = () => {
     this.initialLoadPresets();
     this.checkLogin();
+    doFetch('/api/vlc/is_recording')
+    .then(response => {
+      this.setState({recording: response});
+    })
+    .catch(error => {})
   }
   componentWillUnmount = () => {
       this.cancelPolling();
@@ -115,6 +120,7 @@ class App extends Component {
     .then(response => {
       this.setState(prev => ({ recording: !prev.recording}))
     })
+    .catch(error => {})
   }
 
 
@@ -144,7 +150,7 @@ class App extends Component {
       this.startPolling();
     })
     .catch(error => {
-      console.log("Unable to obtain presets");
+      console.warn("Unable to obtain presets");
     })
   }
 
@@ -158,14 +164,14 @@ class App extends Component {
         // Avoid querying for presets when showing other pages
         return;
       }
-      console.log("Polling for preset");
+      console.debug("Polling for preset");
       doFetch('/api/current_preset', 'GET')
       .then(response => {
-        console.log("Current preset: " + response.current_preset);
+        console.debug("Current preset: " + response.current_preset);
         this.setState({currentPreset: response.current_preset});
       })
       .catch(error => {
-        console.log("Cancelling polling. Error polling for current position " + error);
+        console.error("Cancelling polling. Error polling for current position " + error);
         this.cancelPolling();
       });
     }, 5000);
@@ -178,7 +184,6 @@ class App extends Component {
 
   onSuccess = (username, display_name, admin) => {
     this.setState({currentView: 'home', username: username, validLogin: true, display_name: display_name, admin: admin});
-    console.log("success here");
   }
 
   logoutClicked = () => {
@@ -236,36 +241,40 @@ class App extends Component {
 
       const cameraColor = this.state.validLogin ? 'black' : 'gray';
 
-      let recordColor = 'gray';
-      if(this.state.validLogin) {
-        recordColor = 'black';
-        if (this.state.recording) {
-          recordColor = 'red';
-        } else if (this.state.recording === false) {
-          recordColor = 'white';
-        }
+      let recordClass = 'outer';
+      if(!this.state.validLogin) {
+        recordClass += ' inactive';
       }
       let recordingBtn;
       if (this.state.recording) {
         recordingBtn = (
-            <FiberManualRecord className='inner recording' onClick={() => this.recordPressed()} />
+          <FiberManualRecord className='inner recording' onClick={() => this.recordPressed()} />
+        );
+      }
+
+      let camera = undefined;
+      if (this.state.validLogin) {
+        camera = (
+          <React.Fragment>
+            <PhotoCamera className='camera' onClick={() => this.takeSnapshot()} />
+            {img}
+          </React.Fragment>
         );
       }
 
       homeMenu = (
-          <React.Fragment>
-            <div className='presetContainer'>
-              {buttons}
+        <React.Fragment>
+          <div className='presetContainer'>
+            {buttons}
+          </div>
+          <div className="snapshot">
+            <div className="record">
+              <FiberManualRecord className={recordClass} onClick={() => this.recordPressed()}/>
+              {recordingBtn}
             </div>
-            <div className="snapshot">
-              <div className='record'>
-                <FiberManualRecord className='outer' onClick={() => this.recordPressed()}/>
-                  {recordingBtn}
-              </div>
-              <PhotoCamera className='camera' onClick={() => this.takeSnapshot()} />
-              {img}
-            </div>
-          </React.Fragment>
+            {camera}
+          </div>
+        </React.Fragment>
       );
     }
     else if(this.state.currentView==="about") {

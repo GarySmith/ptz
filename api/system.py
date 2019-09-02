@@ -19,14 +19,13 @@ from . import vlc
 #   + Video snapshot height: 110
 
 
-# Maximum expected time between disk writes when recording video.  This
-# value is used to decide whether the current video capture file is
-# actively being written to.  The value controls how long the
-# is_video_capturing api will pause, so using a large value will cause
-# delays when querying for status.  Conversely, if the value is too short,
-# then it might give misleading results if the system can actually buffer
-# video for more than this interval.
-MAX_WRITE_INTERVAL = 1.0
+# Maximum expected time between disk writes when recording video. This value is
+# used to decide whether the current video capture file is actively being
+# written to. If the value is too long, then it may report that the video is
+# recording long after it has stopped. Conversely, if the value is too short,
+# then it might give misleading results if the system can actually buffer video
+# for more than this interval.
+MAX_WRITE_INTERVAL = 2.0
 
 
 def take_snapshot(host, rc_port, user, snap_dir, delete_after=True):
@@ -93,18 +92,10 @@ def is_video_capturing(host, user, video_dir):
     videos = [f for f in conn.listdir_attr('.')
               if f.filename.split('.')[-1] in ('mp4', 'avi')]
     file_list = sorted(videos, key=lambda f: f.st_mtime, reverse=True)
+    conn.close()
 
     if not file_list:
         return False
 
     file = file_list[0]
-    if time.time() - file.st_mtime > MAX_WRITE_INTERVAL:
-        return False
-
-    last_time = file.st_mtime
-
-    time.sleep(MAX_WRITE_INTERVAL)
-    file = conn.stat(file.filename)
-    conn.close()
-
-    return last_time < file.st_mtime
+    return time.time() - file.st_mtime <= MAX_WRITE_INTERVAL
