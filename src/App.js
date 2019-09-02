@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import Cookies from 'universal-cookie';
-//import logo from './logo.svg';
 import './App.css';
 import Login from './Login.js';
 import Settings from './Settings.js';
@@ -14,9 +13,6 @@ import AddUser from './AddUser.js';
 import FiberManualRecord from '@material-ui/icons/FiberManualRecord';
 import PhotoCamera from '@material-ui/icons/PhotoCamera';
 import Home from '@material-ui/icons/Home';
-
-// import MaterialIcon from 'material-icons-react';
-// import MaterialIcon from '@material/react-material-icon';
 
 class App extends Component {
   constructor(props) {
