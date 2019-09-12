@@ -4,7 +4,6 @@ import './App.css';
 import Login from './Login.js';
 import Settings from './Settings.js';
 import Calibrate from './Calibrate.js';
-import Update from './Update.js';
 import jwt from 'jsonwebtoken';
 import { doFetch } from './RestUtils.js';
 import ReactTimeout from 'react-timeout';
@@ -289,9 +288,6 @@ class App extends Component {
     else if(this.state.currentView==='calibrate') {
       calibrateMenu = (<Calibrate num_presets={this.state.presets.length} admin={this.state.admin} onComplete={this.initialLoadPresets}/>);  //only admin
     }
-    else if(this.state.currentView==='update') {
-      updateMenu = (<Update admin={this.state.admin}/>);  //only admin
-    }
     else if(this.state.currentView==='manageAccount') {
       manageAccount = (<ManageAccount admin={this.state.admin} username={this.state.username}
                        onComplete={() => this.setState({currentView: 'home'})}/>);
@@ -331,7 +327,6 @@ class App extends Component {
             <div className="options" onClick={()=> this.sideButtonClicked("home")}>Home</div>
             <div className={adminOptions} onClick={()=> this.sideButtonClicked("settings")}>Settings</div>
             <div className={adminOptions} onClick={()=> this.sideButtonClicked("calibrate")}>Calibrate</div>
-            <div className={adminOptions} onClick={()=> this.sideButtonClicked("update")}>Update/Upload Image</div>
             <div className={loginView} onClick={()=> this.sideButtonClicked("login")}>Login</div>
 
             <div className={userOptions} onClick={()=> this.sideButtonClicked("manageAccount")}>Manage Users</div>
