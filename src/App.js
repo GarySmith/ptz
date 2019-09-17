@@ -8,7 +8,6 @@ import jwt from 'jsonwebtoken';
 import { doFetch } from './RestUtils.js';
 import ReactTimeout from 'react-timeout';
 import ManageAccount from './ManageAccount.js';
-import AddUser from './AddUser.js';
 import FiberManualRecord from '@material-ui/icons/FiberManualRecord';
 import PhotoCamera from '@material-ui/icons/PhotoCamera';
 import Home from '@material-ui/icons/Home';
@@ -202,7 +201,6 @@ class App extends Component {
     let homeMenu;
     let aboutMenu;
     let manageAccount;
-    let addUser;
 
     if(this.state.currentView==='home') {
       const buttons = this.state.presets.map(e => {
@@ -292,9 +290,6 @@ class App extends Component {
       manageAccount = (<ManageAccount admin={this.state.admin} username={this.state.username}
                        onComplete={() => this.setState({currentView: 'home'})}/>);
     }
-    else if(this.state.currentView==='addUser') {
-      addUser = (<AddUser admin={this.state.admin}/>);
-    }
 
     let upperRight;
     if(this.state.validLogin) {
@@ -330,7 +325,6 @@ class App extends Component {
             <div className={loginView} onClick={()=> this.sideButtonClicked("login")}>Login</div>
 
             <div className={userOptions} onClick={()=> this.sideButtonClicked("manageAccount")}>Manage Users</div>
-            <div className={adminOptions} onClick={()=> this.sideButtonClicked("addUser")}>Add/Delete User</div>
             <div className="options" onClick={()=> this.sideButtonClicked("about")}>About</div>
             <div className={userOptions} onClick={()=> this.logoutClicked()}>Logout</div>
 
@@ -347,7 +341,6 @@ class App extends Component {
           {calibrateMenu}
           {updateMenu}
           {manageAccount}
-          {addUser}
         </div>
       </div>
     );
