@@ -1,5 +1,5 @@
-from flask import Flask, jsonify, send_from_directory, \
-    request, abort, current_app
+from flask import Flask, jsonify, send_from_directory, request, abort, \
+    current_app
 import datetime
 import logging
 import logging.handlers
@@ -94,7 +94,7 @@ def get_vlc_settings():
 @needs_user()
 def change_current_preset():
     """
-    Calls the camera to recall the current preset
+    Calls the camera to recall the given preset
     """
     payload = request.get_json()
     if 'current_preset' not in payload:
@@ -502,6 +502,39 @@ def take_snapshot():
 
     except Exception as e:
         abort(500, str(e))
+
+
+@app.route("/api/preset/<int:preset>", methods=['POST'])
+@needs_admin()
+def change_preset(preset):
+    """
+    Update the given preset to the current camera position, and optionally
+    update the snapshot
+    """
+    if preset < 0 or preset > 255:
+        abort(406, "Invalid preset")
+
+    camera_settings = get_camera_settings()
+
+    position = camera.get_position(camera_settings['ip_address'],
+                                   camera_settings['ptz_port'])
+
+    presets = DB.table('presets')
+
+    Preset = Query()
+    match = presets.search(Preset.num == preset)
+    if (len(match) > 0):
+        # Update the json with the new position
+        presets.update(position, Preset.num == preset)
+    else:
+        presets.insert({
+            'num': preset,
+            'image_url': '/images/{0}.jpg'.format(preset),
+            'zoom': position['zoom'],
+            'pan': position['pan'],
+            'tilt': position['tilt']})
+
+    return jsonify("Success")
 
 
 @app.route("/api/vlc/snapshot/<int:preset>", methods=['POST'])
