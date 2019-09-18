@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Form, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
+import { Button, Checkbox, Form, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import { doFetch } from './RestUtils.js';
 
 class Update extends Component {
@@ -8,6 +8,7 @@ class Update extends Component {
     this.state = {
       disableButton: true,
       preset: '1',
+      updateSnapshot: false,
       message: '',
     };
   }
@@ -17,15 +18,26 @@ class Update extends Component {
     }
   }
 
+  onCheckboxToggled = (evt) => {
+    const checked = evt.target.checked;
+    this.setState({updateSnapshot: checked});
+  }
+
   updatePreset = (evt) => {
     const val = evt.target.value;
     this.setState({preset: val});
   }
 
-  onSubmit = () => {
-    const url = '/api/preset/' + this.state.preset;
-    doFetch(url, "POST")
-    // call change_preset, and optionally call update_preset_snapshot
+  onSubmit = (evt) => {
+    evt.preventDefault();
+    const presetUrl = '/api/preset/' + this.state.preset;
+    doFetch(presetUrl, "POST")
+    .then(response => {
+      if (this.state.updateSnapshot) {
+        const snapshotUrl = '/api/vlc/snapshot/' + this.state.preset;
+        return doFetch(snapshotUrl, 'POST')
+      }
+    })
   }
 
   render() {
@@ -54,6 +66,7 @@ class Update extends Component {
           After that is done, enter the same preset number below.
         </p>
         <Form className="settingsForm">
+          <div><Checkbox inline onChange={this.onCheckboxToggled} checked={this.state.updateSnapshot}>Update Snapshot</Checkbox></div>
           <FormGroup controlId="preset">
             <ControlLabel>Preset</ControlLabel>
             <FormControl type="number" min={1} max={255} value={this.state.preset} onChange={this.updatePreset}/>
