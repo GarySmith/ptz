@@ -180,7 +180,7 @@ class ManageAccount extends Component {
   deleteClicked(user) {
     let userDelete = user.target.id;
     console.log(userDelete);
-    const confirmDelete = window.confirm("Do you really want to delete " + user.target.id + "?"); 
+    const confirmDelete = window.confirm("Do you really want to delete " + user.target.id + "?");
     if(!confirmDelete) { return; }
     const body = JSON.stringify({username: userDelete});
      doFetch('api/users/' + userDelete, 'DELETE', body)
@@ -257,11 +257,9 @@ class ManageAccount extends Component {
     let sessionFormGroup;
     let submitButton;
     let table;
-    let tableTest = this.createUserList();
-    let addUser;
     let cancelButton;
     let addUserButton;
-    
+
     if(this.state.addUser) {
       return (<AddUser admin={this.state.isAdmin}/>);
     }
