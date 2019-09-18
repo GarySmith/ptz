@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Button, Form, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
+import { doFetch } from './RestUtils.js';
 
 class Update extends Component {
   constructor(props) {
@@ -20,10 +21,15 @@ class Update extends Component {
     const val = evt.target.value;
     this.setState({preset: val});
   }
-  onSubmit = (evt) => {
+
+  onSubmit = () => {
+    const url = '/api/preset/' + this.state.preset;
+    doFetch(url, "POST")
+    // call change_preset, and optionally call update_preset_snapshot
   }
 
   render() {
+    // Need to add button for previewing camera.  Steal that logic from App.js
     return (
       <div>
         <div className="header">Update Preset</div>
