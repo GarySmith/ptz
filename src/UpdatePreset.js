@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Button, Checkbox, Form, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import { doFetch } from './RestUtils.js';
+import PhotoCamera from '@material-ui/icons/PhotoCamera';
 
 class UpdatePreset extends Component {
   constructor(props) {
@@ -10,6 +11,7 @@ class UpdatePreset extends Component {
       preset: '1',
       updateSnapshot: false,
       message: '',
+      snapshotTimestamp: 0,  // time when snapshot taken (-1 == none available)
     };
   }
   componentDidMount = () => {
@@ -17,6 +19,41 @@ class UpdatePreset extends Component {
       this.setState({disableButton: false});
     }
   }
+
+  setSnapshotTimer = () => {
+      this.snapshotTimer = setTimeout(() => {
+        this.setState({snapshotTimestamp: 0});
+        this.snapshotTimer = null;
+      }, 2500);
+  }
+
+  takeSnapshot = () => {
+    debugger;
+    if (this.snapshotTimer) {
+      console.log('snapshot is already being shown. Taking a new one');
+      clearTimeout(this.snapshotTimer);
+      this.setState({snapshotTimestamp: 0});
+    }
+
+    doFetch('/api/vlc/is_playing', "GET")
+    .then(response => {
+      let timestamp = -1;
+
+      if (response) {
+        // Use a unique query parameter so that the browser takes
+        // a new snapshot rather than serving up an old one
+        timestamp = new Date().getTime();
+      }
+
+      this.setState({snapshotTimestamp: timestamp});
+      this.setSnapshotTimer();
+    })
+    .catch(error => {
+      this.setState({snapshotTimestamp: -1});
+      this.setSnapshotTimer();
+    });
+  }
+
 
   onCheckboxToggled = (evt) => {
     const checked = evt.target.checked;
@@ -41,6 +78,12 @@ class UpdatePreset extends Component {
   }
 
   render() {
+    let img;
+    if (this.state.snapshotTimestamp > 0) {
+      img = (<img alt='snapshot' src={"/api/vlc/snapshot?t=" + this.state.snapshotTimestamp}/>);
+    } else if (this.state.snapshotTimestamp < 0) {
+      img = (<img alt='snapshot' src={process.env.PUBLIC_URL + 'images/not_playing.png'} />);
+    }
     // Need to add button for previewing camera.  Steal that logic from App.js
     return (
       <div>
@@ -65,6 +108,10 @@ class UpdatePreset extends Component {
         <p>
           After that is done, enter the same preset number below.
         </p>
+        <div className="snapshot">
+          <PhotoCamera className='camera' onClick={this.takeSnapshot} />
+          {img}
+        </div>
         <Form className="settingsForm">
           <div><Checkbox inline onChange={this.onCheckboxToggled} checked={this.state.updateSnapshot}>Update Snapshot</Checkbox></div>
           <FormGroup controlId="preset">
