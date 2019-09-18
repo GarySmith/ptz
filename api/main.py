@@ -301,8 +301,10 @@ def delete_user(user):
 def get_all_users():
 
     accounts = DB.table('accounts')
-    # User = Query()
-    return jsonify(accounts.all())
+    results = []
+    for account in accounts:
+        results.append({k: v for k, v in account.items() if k != 'password'})
+    return jsonify(results)
 
 
 @app.route("/api/users/<user>", methods=['GET'])
@@ -314,7 +316,9 @@ def get_user(user):
     if not accounts.search(User.username == user):
         abort(401, 'Invalid user')
 
-    return jsonify(accounts.get(User.username == user))
+    account = {k: v for k, v in accounts.get(User.username == user).items()
+               if k != 'password'}
+    return jsonify(account)
 
 
 @app.route("/api/users", methods=['POST'])
