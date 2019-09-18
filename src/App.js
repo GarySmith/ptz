@@ -3,7 +3,7 @@ import Cookies from 'universal-cookie';
 import './App.css';
 import Login from './Login.js';
 import Settings from './Settings.js';
-import Update from './Update.js';
+import UpdatePreset from './UpdatePreset.js';
 import jwt from 'jsonwebtoken';
 import { doFetch } from './RestUtils.js';
 import ReactTimeout from 'react-timeout';
@@ -281,7 +281,7 @@ class App extends Component {
       settingsMenu = (<Settings onComplete={this.initialLoadPresets}/>); //only admin
     }
     else if(this.state.currentView==='update') {
-      updateMenu = (<Update admin={this.state.admin} onComplete={this.initialLoadPresets}/>);  //only admin
+      updateMenu = (<UpdatePreset onComplete={this.initialLoadPresets}/>);  //only admin
     }
     else if(this.state.currentView==='manageAccount') {
       manageAccount = (<ManageAccount admin={this.state.admin} username={this.state.username}

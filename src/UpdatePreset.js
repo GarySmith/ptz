@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Button, Checkbox, Form, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import { doFetch } from './RestUtils.js';
 
-class Update extends Component {
+class UpdatePreset extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -79,4 +79,4 @@ class Update extends Component {
    }
 }
 
-export default Update;
+export default UpdatePreset;
