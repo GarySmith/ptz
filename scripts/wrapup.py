@@ -20,6 +20,20 @@ import yaml
 # completed
 
 
+def progress(message='Message'):
+    command = ['/usr/bin/zenity',
+               '--progress',
+               '--pulsate',
+               '--no-cancel',
+               '--auto-close',
+               '--text',
+               message]
+    proc = Popen(command, stdout=PIPE, stderr=PIPE, stdin=PIPE)
+    if proc.returncode:
+        raise Exception()
+    return proc
+
+
 def zenity(*args, **kwargs):
     command = ['/usr/bin/zenity']
     if args:
@@ -104,7 +118,7 @@ audio = os.path.join(SERVICES_DIR, today + '.mp3')
 if os.path.exists(audio):
     print("Audio has already been extracted from video")
 else:
-    print("Extracting audio from video recording")
+    p = progress('Extracting audio from video recording')
     command = [
         # Note: cvlc runs withuot the GUI
         '/usr/bin/vlc',
@@ -115,6 +129,7 @@ else:
         video,
         'vlc://quit']
     run(command)
+    p.stdin.close()
 
 # Upload the file to vimeo.
 #  If it already exists, prompt to override
@@ -137,19 +152,21 @@ if response['total'] > 0:
         zenity("--question", "--no-wrap",
                "--text",
                '%s has already been uploaded. Overwrite?' % (today))
-        print("Uploading replacement video")
+        p = progress("Uploading replacement video")
         client.replace(video_uri=video_uri, filename=video)
+        p.stdin.close()
     except Exception:
         pass
 
 else:
-    print("Uploading video.  This will take a while...")
+    p = progress('Uploading video')
     video_uri = client.upload(video, data={
         'name': today,
         'description': description,
         'content_rating': 'safe',
         'language': 'en-US',
     })
+    p.stdin.close()
 
 #
 # Add the video to the Services channel
