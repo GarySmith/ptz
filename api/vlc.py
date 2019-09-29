@@ -32,5 +32,7 @@ def send_keypress(ip_address, port, keyname):
         s.connect((ip_address, port))
 
         # Convert keyname to bytes if it is a string
-        command = f'key {keyname}\nlogout\n'
+        # Use str.format, since interpolated strings are new to 3.6 and the
+        # raspberry pi only runs 3.5
+        command = str.format('key {}\nlogout\n', keyname)
         network.send_bytes(s, bytes(command, 'utf-8'))
