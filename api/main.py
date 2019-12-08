@@ -172,43 +172,6 @@ def get_current_preset():
     return jsonify({'current_preset': -1})
 
 
-@app.route("/api/calibrate", methods=['POST'])
-@needs_admin()
-def calibrate():
-    """
-    Manipulates the camera to move to each preset and capture the
-    coordinates of that position, storing them away for future reference
-    """
-    info = {}
-    if request.content_length:
-        info = request.get_json()
-
-    max_presets = int(info.get('max_presets', 3))
-    if max_presets < 1 or max_presets > 255:
-        abort(406, "Invalid number or presets")
-
-    presets = []
-    # Create a new, ordered, empty sets of presets
-    for num in range(1, max_presets+1):
-        presets.append({'num': num,
-                        'image_url': '/images/{0}.jpg'.format(num)})
-
-    camera_settings = get_camera_settings()
-    ip = camera_settings['ip_address']
-    port = camera_settings['ptz_port']
-
-    for preset in presets:
-        camera.recall_preset(ip, port, preset['num'])
-        position = camera.get_position(ip, port)
-        LOG.info("Preset %s is at %s", preset['num'], position)
-        preset.update(position)
-
-    preset_tbl = DB.table('presets')
-    preset_tbl.purge()
-    preset_tbl.insert_multiple(presets)
-
-    return jsonify("Success")
-
 # Important: In production, the web server should be configured to serve image
 # files directly rather than calling this service.  For example, nginx can
 # handle this with the configuration:
