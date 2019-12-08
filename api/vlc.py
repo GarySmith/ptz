@@ -1,19 +1,25 @@
 from . import network
+import logging
 import socket
 
+LOG = logging.getLogger(__name__)
 
 def is_playing(ip_address, port):
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((ip_address, port))
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((ip_address, port))
 
-        network.send_bytes(s, b'is_playing\n')
-        resp = 'tombstone'
-        while len(resp) > 3:
-            resp = network.receive_bytes(s, maxlen=80, eom=b'\r\n')
-        network.send_bytes(s, b'logout\n')
+            network.send_bytes(s, b'is_playing\n')
+            resp = 'tombstone'
+            while len(resp) > 3:
+                resp = network.receive_bytes(s, maxlen=80, eom=b'\r\n')
+            network.send_bytes(s, b'logout\n')
 
-        return resp.decode()[0] == '1'
+            return resp.decode()[0] == '1'
+    except ConnectionRefusedError as e:
+        LOG.warn("Connection refused to vlc, is_playing returning False")
+        return False
 
 
 def take_snapshot(ip_address, port):
