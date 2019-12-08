@@ -17,7 +17,7 @@ from api import vlc
 LOG_FILENAME = 'ptz.log'
 
 handler = logging.handlers.RotatingFileHandler(LOG_FILENAME,
-                                               maxBytes=65535,
+                                               maxBytes=1024*1024,
                                                backupCount=5)
 
 logging.basicConfig(
