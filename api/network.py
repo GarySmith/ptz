@@ -5,7 +5,7 @@ import socket
 # Enable debugging the network traffic with print statements.  These
 # give a real-time, digestible format for logging, as opposed to logging
 # statements
-DEBUG_PRINT = True
+DEBUG_PRINT = False
 
 
 def send_bytes(s, msg):

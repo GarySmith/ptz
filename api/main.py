@@ -19,7 +19,11 @@ LOG_FILENAME = 'ptz.log'
 handler = logging.handlers.RotatingFileHandler(LOG_FILENAME,
                                                maxBytes=65535,
                                                backupCount=5)
-logging.basicConfig(level=logging.DEBUG, handlers=[handler])
+
+logging.basicConfig(
+        format='%(asctime)s %(name)s %(levelname)s %(message)s',
+        level=logging.INFO,
+        handlers=[handler])
 
 LOG = logging.getLogger(__name__)
 
@@ -37,8 +41,6 @@ DEFAULT_IP_ADDRESS = "192.168.100.88"
 DEFAULT_PTZ_PORT = 5678
 
 # Create an error handler that returns json
-
-
 @app.errorhandler(401)
 @app.errorhandler(403)
 @app.errorhandler(404)
@@ -50,6 +52,10 @@ def json_errors(error):
     response.status_code = error.code
     return response
 
+
+@app.before_request
+def log_request():
+    LOG.info("%s %s", request.method, request.path)
 
 @app.route("/api/presets")
 def get_all_presets():
@@ -189,7 +195,7 @@ def calibrate():
     for preset in presets:
         camera.recall_preset(ip, port, preset['num'])
         position = camera.get_position(ip, port)
-        LOG.debug("Preset %s is at %s", preset['num'], position)
+        LOG.info("Preset %s is at %s", preset['num'], position)
         preset.update(position)
 
     preset_tbl = DB.table('presets')
