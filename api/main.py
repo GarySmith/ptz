@@ -21,11 +21,15 @@ handler = logging.handlers.RotatingFileHandler(LOG_FILENAME,
                                                backupCount=5)
 
 logging.basicConfig(
-        format='%(asctime)s %(name)s %(levelname)s %(message)s',
+        format='%(asctime)s %(levelname)s %(message)s',
         level=logging.INFO,
         handlers=[handler])
 
 LOG = logging.getLogger(__name__)
+
+# werkzeug is not present in production, so do not rely on having its logs
+# in development
+logging.getLogger('werkzeug').setLevel(logging.WARN)
 
 app = Flask(__name__,
             static_url_path='',
