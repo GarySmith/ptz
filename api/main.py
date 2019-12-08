@@ -53,9 +53,10 @@ def json_errors(error):
     return response
 
 
-@app.before_request
-def log_request():
-    LOG.info("%s %s", request.method, request.path)
+@app.after_request
+def log_request(resp):
+    LOG.info("%s %s %d", request.method, request.path, resp.status_code)
+    return resp
 
 @app.route("/api/presets")
 def get_all_presets():
