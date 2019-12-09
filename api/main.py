@@ -4,6 +4,7 @@ import datetime
 import logging
 import logging.handlers
 import os
+import redis
 import shutil
 import time
 from tinydb import TinyDB, Query
@@ -39,6 +40,7 @@ app.logger.handlers = []
 app.logger.propagate = True
 
 DB = TinyDB('settings.json')
+r = redis.Redis(decode_responses=True)
 
 # Default setting used by the PTZ camera
 DEFAULT_IP_ADDRESS = "192.168.100.88"
@@ -78,13 +80,11 @@ def get_all_presets():
 
 def get_camera_settings():
 
-    camera = DB.table('camera')
-    settings = camera.all()
-    if (len(settings) < 1):
-        camera.insert({'ip_address': DEFAULT_IP_ADDRESS,
-                       'ptz_port': DEFAULT_PTZ_PORT})
-
-    return settings[0]
+    ip_address, ptz_port = r.hmget('camera', 'ip_address', 'ptz_port')
+    return {
+        'ip_address': ip_address or DEFAULT_IP_ADDRESS,
+        'ptz_port': int(ptz_port) or DEFAULT_PTZ_PORT
+    }
 
 
 def get_vlc_settings():
@@ -381,9 +381,7 @@ def update_camera_settings():
     if not network.test_connection(ip_address, ptz_port):
         abort(422, 'Unable to connect')
 
-    get_camera_settings()
-    camera_settings = DB.table('camera')
-    camera_settings.update({
+    r.hmset('camera', {
         'ip_address': ip_address,
         'ptz_port': ptz_port})
     return jsonify("Success")

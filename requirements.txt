@@ -4,3 +4,4 @@ tinydb>=3.9
 uwsgi
 pysmb>=1.1.27 # zlib/libpng
 paramiko>=2.6 # LGPL
+redis>=3.3.11 # MIT
