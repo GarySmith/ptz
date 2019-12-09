@@ -89,16 +89,21 @@ def get_camera_settings():
 
 def get_vlc_settings():
 
-    vlc = DB.table('vlc')
-    settings = vlc.all()
-    if (len(settings) < 1):
-        vlc.insert({'address': '192.168.1.2',
-                    'rc_port': 4200,
-                    'user': 'gary',
-                    'snapshot_dir': 'scans',
-                    'video_dir': 'Videos',
-                    })
-    return settings[0]
+    result = {
+        'address': '192.168.1.2',
+        'rc_port': 4200,
+        'user': 'gary',
+        'snapshot_dir': 'scans',
+        'video_dir': 'Videos',
+    }
+
+    vlc = r.hgetall('vlc')
+    if vlc:
+        if 'rc_port' in vlc:
+            vlc['rc_port'] = int(vlc['rc_port'])
+        result.update(vlc)
+
+    return result
 
 
 @app.route("/api/current_preset", methods=['POST'])
@@ -383,7 +388,8 @@ def update_camera_settings():
 
     r.hmset('camera', {
         'ip_address': ip_address,
-        'ptz_port': ptz_port})
+        'ptz_port': ptz_port
+    })
     return jsonify("Success")
 
 
@@ -414,8 +420,7 @@ def update_vlc_settings():
     except Exception as e:
         abort(422, str(e))
 
-    vlc_settings = DB.table('vlc')
-    vlc_settings.update({
+    r.hmset('vlc', {
         'address': address,
         'rc_port': rc_port,
         'user': user,
