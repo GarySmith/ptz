@@ -64,6 +64,20 @@ def log_request(resp):
     LOG.info("%s %s %d", request.method, request.path, resp.status_code)
     return resp
 
+
+def get_presets():
+    result = []
+    for preset in r.smembers('presets'):
+        info = r.hgetall(preset)
+        for key in ('num', 'pan', 'tilt', 'zoom'):
+            if key in info:
+                info[key] = int(info[key])
+
+        result.append(info)
+
+    return jsonify(result)
+
+
 @app.route("/api/presets")
 def get_all_presets():
     """
@@ -75,7 +89,7 @@ def get_all_presets():
     Note:
         The camera supports a maximum of 255 presets
     """
-    return jsonify(DB.table('presets').all())
+    return jsonify(get_presets())
 
 
 def get_camera_settings():
@@ -143,24 +157,22 @@ def get_current_preset():
     position = camera.get_position(camera_settings['ip_address'],
                                    camera_settings['ptz_port'])
 
+    presets = get_presets()
     # Continue looping if the camera is moving and it is not at a known preset
     while last_position != position and time.time() - start_time < 7:
 
-        presets = DB.table('presets')
-        Preset = Query()
-        match = presets.search((Preset.zoom == position['zoom']) &
-                               (Preset.pan == position['pan']) &
-                               (Preset.tilt == position['tilt']))
-
-        if (len(match) > 0):
-            return jsonify({'current_preset': match[0]['num']})
+        for preset in presets:
+            if (preset['zoom'] == position['zoom'] and
+                preset['pan'] == position['pan'] and
+                preset['tilt'] == position['tilt']):
+            return jsonify({'current_preset': preset['num']})
 
         # There is no direct match, so search for one that is close.  Each
         # field is represented as a 2-byte unsigned integer, so that its
         # value potentially ranges from 0 to 65536, but it appears that some
         # values, especially pan, only appear in a small portion of this range.
         # Therefore, consider a "close" value to be within +/= 5 of its target.
-        for preset in presets.all():
+        for preset in presets:
             if preset['zoom']-5 <= position['zoom'] <= preset['zoom']+5 and \
                preset['pan']-5 <= position['pan'] <= preset['pan']+5 and \
                preset['tilt']-5 <= position['tilt'] <= preset['tilt']+5:
@@ -496,20 +508,16 @@ def change_preset(preset):
     position = camera.get_position(camera_settings['ip_address'],
                                    camera_settings['ptz_port'])
 
-    presets = DB.table('presets')
 
-    Preset = Query()
-    match = presets.search(Preset.num == preset)
-    if (len(match) > 0):
-        # Update the json with the new position
-        presets.update(position, Preset.num == preset)
-    else:
-        presets.insert({
-            'num': preset,
-            'image_url': '/images/{0}.jpg'.format(preset),
-            'zoom': position['zoom'],
-            'pan': position['pan'],
-            'tilt': position['tilt']})
+    key = 'preset:{0}' % preset
+    r.hmset(key, {
+        'num': preset,
+        'image_url': '/images/{0}.jpg'.format(preset),
+        'zoom': position['zoom'],
+        'pan': position['pan'],
+        'tilt': position['tilt']})
+    })
+    r.sadd(key)
 
     return jsonify("Success")
 
