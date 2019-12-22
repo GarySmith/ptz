@@ -41,6 +41,15 @@ app.logger.propagate = True
 
 DB = TinyDB('settings.json')
 r = redis.Redis(decode_responses=True)
+# The data is structured in redis as follows:
+# 'vlc' and 'camera' are standard redis hashes -- use hgetall to view all
+#    key/value pairs
+# Since redis does not support arrays of hashes, 'accounts' and 'presets'
+# are represented by a set of keys and a corresponding hash for each. For
+# example, the set named 'presets' (viewed with smembers presets' contains
+# the values preset:1, preset:2, etc., and for each such value, there is
+# a hash with that name, e.g. hgetall preset:1
+#
 
 # Default setting used by the PTZ camera
 DEFAULT_IP_ADDRESS = "192.168.100.88"
