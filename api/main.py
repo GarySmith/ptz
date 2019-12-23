@@ -81,8 +81,7 @@ def get_presets():
                 info[key] = int(info[key])
 
         result.append(info)
-
-    return jsonify(result)
+    return sorted(result, key=lambda x : x['num'])
 
 
 def get_accounts():
