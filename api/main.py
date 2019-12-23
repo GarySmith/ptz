@@ -87,6 +87,17 @@ def get_presets():
     return jsonify(result)
 
 
+def get_accounts():
+    result = []
+    for account in r.smembers('accounts'):
+        info = r.hgetall(account)
+        if 'admin' in info:
+            info['admin'] = info['admin'].lower() == "true"
+        result.append(info)
+
+    return result
+
+
 @app.route("/api/presets")
 def get_all_presets():
     """
@@ -174,7 +185,8 @@ def get_current_preset():
             if (preset['zoom'] == position['zoom'] and
                 preset['pan'] == position['pan'] and
                 preset['tilt'] == position['tilt']):
-            return jsonify({'current_preset': preset['num']})
+
+                return jsonify({'current_preset': preset['num']})
 
         # There is no direct match, so search for one that is close.  Each
         # field is represented as a 2-byte unsigned integer, so that its
@@ -224,9 +236,8 @@ def login():
     username = info.get('username')
     password = info.get('password')
 
-    accounts = DB.table('accounts')
-    User = Query()
-    accts = accounts.search(User.username == username)
+    accounts = get_accounts()
+    acct = [a for a in accounts if a.username == username]
     if len(accts) == 1:
         acct = accts[0]
         if acct['password'] == password:
@@ -287,12 +298,16 @@ def delete_user(user):
     if payload['user'] == user:
         abort(422, 'Cannot delete yourself')
 
-    accounts = DB.table('accounts')
-    User = Query()
-    if not accounts.search(User.username == user):
+    accounts = get_accounts()
+    acct = [a for a in accounts if a['username'] == user]
+    if len(acct) < 1:
         abort(401, 'Invalid user')
 
-    accounts.remove(User.username == user)
+    key = account_key(user)
+    items = r.hkeys(key)
+    r.hdel(*items)
+    r.srem('accounts', key)
+
     return jsonify('Success')
 
 
@@ -300,8 +315,8 @@ def delete_user(user):
 @needs_admin()
 def get_all_users():
 
-    accounts = DB.table('accounts')
     results = []
+    accounts = get_accounts()
     for account in accounts:
         results.append({k: v for k, v in account.items() if k != 'password'})
     return jsonify(results)
@@ -311,14 +326,14 @@ def get_all_users():
 @needs_admin()
 def get_user(user):
 
-    accounts = DB.table('accounts')
-    User = Query()
-    if not accounts.search(User.username == user):
+    accounts = get_accounts()
+    acct = [a for a in accounts if a['username'] == user]
+    if len(acct) < 1:
         abort(401, 'Invalid user')
 
-    account = {k: v for k, v in accounts.get(User.username == user).items()
-               if k != 'password'}
-    return jsonify(account)
+    result = acct[0]
+    del result['password']
+    return jsonify(result)
 
 
 @app.route("/api/users", methods=['POST'])
@@ -326,21 +341,25 @@ def get_user(user):
 def create_user():
 
     info = request.get_json()
-
     username = info['username']
-    accounts = DB.table('accounts')
-    User = Query()
-    if accounts.search(User.username == username):
+
+    accounts = get_accounts()
+    acct = [a for a in accounts if a['username'] == username]
+    if len(acct) > 0:
         abort(401, 'User already exists')
 
     user = {
         'username': username,
         'password': info['password'],
-        'admin': info.get('admin') in ('true', True),
+        'admin': info.get('admin','').lower(),
         'display_name': info.get('display_name', ''),
-        'session_duration': 1,
+        'session_duration': '1',
     }
-    accounts.insert(user)
+
+    key = account_key(username)
+    r.hmset(key, user)
+    r.sadd('accounts', key)
+
     return jsonify('Success')
 
 
@@ -525,8 +544,7 @@ def change_preset(preset):
         'zoom': position['zoom'],
         'pan': position['pan'],
         'tilt': position['tilt']})
-    })
-    r.sadd(key)
+    r.sadd('presets', key)
 
     return jsonify("Success")
 
@@ -569,3 +587,7 @@ def send_keypress(keyname):
 
     except Exception as e:
         abort(500, str(e))
+
+
+def account_key(name):
+    return 'account:%s' % name
