@@ -7,7 +7,6 @@ import os
 import redis
 import shutil
 import time
-from tinydb import TinyDB, Query
 
 from api.auth import needs_admin, needs_user, create_token, get_token_payload
 from api import camera
@@ -39,7 +38,6 @@ app.logger
 app.logger.handlers = []
 app.logger.propagate = True
 
-DB = TinyDB('settings.json')
 r = redis.Redis(decode_responses=True)
 # The data is structured in redis as follows:
 # 'vlc' and 'camera' are standard redis hashes -- use hgetall to view all
@@ -91,12 +89,30 @@ def get_accounts():
     result = []
     for account in r.smembers('accounts'):
         info = r.hgetall(account)
-        if 'admin' in info:
-            info['admin'] = info['admin'].lower() == "true"
+        info['admin'] = to_bool(info.get('admin'))
         result.append(info)
 
     return result
 
+
+def get_account(username):
+    key = account_key(username)
+
+    if r.sismember('accounts', key):
+        info = r.hgetall(key)
+        info['admin'] = to_bool(info.get('admin'))
+
+        return info
+
+
+def account_key(name):
+    return 'account:%s' % name
+
+def to_bool(val):
+    if not val:
+        return False
+
+    return val.lower() == 'true'
 
 @app.route("/api/presets")
 def get_all_presets():
@@ -236,25 +252,23 @@ def login():
     username = info.get('username')
     password = info.get('password')
 
-    accounts = get_accounts()
-    acct = [a for a in accounts if a.username == username]
-    if len(accts) == 1:
-        acct = accts[0]
-        if acct['password'] == password:
-            is_admin = acct['admin']
-            display_name = acct['display_name']
-            exp_time = time.time() + \
-                datetime.timedelta(days=365).total_seconds()
-            token = create_token(username, display_name, is_admin, exp_time)
-            response = jsonify({
-                'display_name': display_name,
-                'admin': is_admin,
-                'token': token,
-            })
-            response.set_cookie('token', value=token, expires=exp_time)
-            return response
+    acct = get_account(username)
+    if acct is None:
+        abort(401, 'Invalid credentials')
 
-    abort(401, 'Invalid credentials')
+    if acct['password'] == password:
+        is_admin = acct['admin']
+        display_name = acct['display_name']
+        exp_time = time.time() + \
+            datetime.timedelta(days=365).total_seconds()
+        token = create_token(username, display_name, is_admin, exp_time)
+        response = jsonify({
+            'display_name': display_name,
+            'admin': is_admin,
+            'token': token,
+        })
+        response.set_cookie('token', value=token, expires=exp_time)
+        return response
 
 
 @app.route("/api/users/<user>/password", methods=['POST'])
@@ -280,12 +294,12 @@ def change_my_password():
 
 def update_password(user, new_pass):
 
-    accounts = DB.table('accounts')
-    User = Query()
-    if not accounts.search(User.username == user):
+    acct = get_account(user)
+    if acct is None:
         abort(401, 'Invalid user')
 
-    accounts.update({'password': new_pass}, User.username == user)
+    key = account_key(user)
+    r.hset(key, 'password', new_pass)
     return jsonify('Success')
 
 
@@ -298,9 +312,8 @@ def delete_user(user):
     if payload['user'] == user:
         abort(422, 'Cannot delete yourself')
 
-    accounts = get_accounts()
-    acct = [a for a in accounts if a['username'] == user]
-    if len(acct) < 1:
+    acct = get_account(user)
+    if acct is None:
         abort(401, 'Invalid user')
 
     key = account_key(user)
@@ -326,14 +339,12 @@ def get_all_users():
 @needs_admin()
 def get_user(user):
 
-    accounts = get_accounts()
-    acct = [a for a in accounts if a['username'] == user]
-    if len(acct) < 1:
+    acct = get_account(user)
+    if acct is None:
         abort(401, 'Invalid user')
 
-    result = acct[0]
-    del result['password']
-    return jsonify(result)
+    del acct['password']
+    return jsonify(acct)
 
 
 @app.route("/api/users", methods=['POST'])
@@ -343,12 +354,11 @@ def create_user():
     info = request.get_json()
     username = info['username']
 
-    accounts = get_accounts()
-    acct = [a for a in accounts if a['username'] == username]
-    if len(acct) > 0:
+    acct = get_account(username)
+    if acct is not None:
         abort(401, 'User already exists')
 
-    user = {
+    user_info = {
         'username': username,
         'password': info['password'],
         'admin': info.get('admin','').lower(),
@@ -357,7 +367,7 @@ def create_user():
     }
 
     key = account_key(username)
-    r.hmset(key, user)
+    r.hmset(key, user_info)
     r.sadd('accounts', key)
 
     return jsonify('Success')
@@ -367,21 +377,19 @@ def create_user():
 @app.route("/api/users/<user>/settings", methods=['POST'])
 @needs_admin()
 def change_setting(user):
-    accounts = DB.table('accounts')
-    User = Query()
-    if not accounts.search(User.username == user):
+    acct = get_account(user)
+    if acct is None:
         abort(401, 'Invalid user')
+
     info = request.get_json()
-    password = info.get('password')
-    admin = info.get('admin')
-    display = info.get('display_name')
-    session = info.get('session')
-    if len(password) > 0:
-        accounts.update({'password': password}, User.username == user)
-    if len(display) > 0:
-        accounts.update({'display_name': display}, User.username == user)
-    accounts.update({'admin': admin, 'session_duration': session},
-                    User.username == user)
+
+    key = account_key(user)
+    for field in ('password', 'display_name', 'session_duration'):
+        if field in info:
+            r.hset(key, field, info[field])
+    if 'admin' in info:
+        r.hset(key, 'admin', info['admin'].lower())
+
     return jsonify('Success')
 
 
@@ -392,18 +400,18 @@ def change_my_setting():
     token = request.cookies.get('token')
     payload = get_token_payload(token)
     user = payload['user']
-    accounts = DB.table('accounts')
-    User = Query()
-    if not accounts.search(User.username == user):
+
+    acct = get_account(user)
+    if acct is None:
         abort(401, 'Invalid user')
 
     info = request.get_json()
-    password = info.get('password')
-    display = info.get('display_name')
-    if len(display) > 0:
-        accounts.update({'display_name': display}, User.username == user)
-    if len(password) > 0:
-        accounts.update({'password': password}, User.username == user)
+
+    key = account_key(user)
+    for field in ('password', 'display_name'):
+        if field in info:
+            r.hset(key, field, info[field])
+
     return jsonify('Success')
 
 
@@ -587,7 +595,3 @@ def send_keypress(keyname):
 
     except Exception as e:
         abort(500, str(e))
-
-
-def account_key(name):
-    return 'account:%s' % name
