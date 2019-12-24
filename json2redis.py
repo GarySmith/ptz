@@ -16,7 +16,8 @@ r = redis.Redis(decode_responses=True)
 
 def hdelall(hash):
     keys = r.hkeys(hash)
-    r.hdel(*keys)
+    if keys:
+        r.hdel(*keys)
 
 with open(sys.argv[1]) as f:
     payload = json.load(f)
