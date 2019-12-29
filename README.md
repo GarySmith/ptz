@@ -77,7 +77,6 @@ Improvement and adjustments that are needed (not in any particular order):
 - Replace polling with websockets for changes, including start/stop of recoding, change of camera position, change of
   presets.
 - Add a UI setting for the rtsp feed
-- Add ability to run wrapup script without X
 - Add button to the UI to detect when the recording has aborted and automatically restart it.  If possible, this feature
   may be automatically enabled depending on the time/date, but would need to figure out how to override it to actually
   stop recording

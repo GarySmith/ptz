@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import argparse
 import datetime
 import os
 from subprocess import run, Popen, PIPE
@@ -13,12 +14,17 @@ import yaml
 # - Extract the audio into a separate file into Dropbox
 # - Upload the file to vimeo, with appropriate properties
 # - Add the video to the Services channel in vimeo
-# - Shutdown the laptop
 
 # It is important that this script be idempotent, so that it can be run
 # multiple times and only perform those steps that have not already been
 # completed
 
+parser = argparse.ArgumentParser(description="Wrap up the recording.")
+parser.add_argument('--batch', '-b', action='store_true',
+                    help='Avoid prompts and GUI messages')
+parser.add_argument('--description', '-d',
+                    help='Description of the video to show in Vimeo')
+cmdargs = parser.parse_args()
 
 def progress(message='Message'):
     command = ['/usr/bin/zenity',
@@ -62,9 +68,13 @@ try:
     with open(config_file) as f:
         config = yaml.safe_load(f)
 except Exception as e:
-    zenity('--error', '--no-wrap',
-           '--ok-label', 'Exit',
-           '--text', '\n'.join(['Unable to load config.json', str(e)]))
+    message = '\n'.join(['Unable to load config.json', str(e)])
+    if cmdargs.batch:
+        print("Exiting: ", message)
+    else:
+        zenity('--error', '--no-wrap',
+            '--ok-label', 'Exit',
+            '--text', message)
     sys.exit(1)
 
 # Convert the filename from the cryptic version that VLC creates,
@@ -80,8 +90,9 @@ for f in files:
 if original:
     if video in files:
         try:
-            zenity("--question", "--no-wrap",
-                   "--text", 'Overwrite %s with %s?' % (video, original))
+            if not cmdargs.batch:
+                zenity("--question", "--no-wrap",
+                    "--text", 'Overwrite %s with %s?' % (video, original))
             print('Renaming %s to %s' % (original, video))
             os.rename(original, video)
 
@@ -92,24 +103,33 @@ if original:
         os.rename(original, video)
 
 elif video not in files:
-    zenity('--error', '--no-wrap',
-           '--ok-label', 'Exit',
-           '--text', 'No recording found for today, '+today)
+    message = 'No recording found for today, '+today
+    if cmdargs.batch:
+        print(message)
+    else:
+        zenity('--error', '--no-wrap',
+            '--ok-label', 'Exit',
+            '--text', message)
     sys.exit(1)
 else:
     print('Video recording is already named correctly')
 
 
 # Get the description of the service before all of the long-running tasks
-try:
-    out, _ = zenity('--title', 'Video Description',
-                    '--entry',
-                    '--width', '800',
-                    '--text', 'Description of the video to show in Vimeo')
-except Exception:
-    sys.exit(1)
+if cmdargs.description:
+    description = cmdargs.description
+elif cmdargs.batch:
+    description = 'Recorded service for '+today
+else:
+    try:
+        out, _ = zenity('--title', 'Video Description',
+                        '--entry',
+                        '--width', '800',
+                        '--text', 'Description of the video to show in Vimeo')
+    except Exception:
+        sys.exit(1)
 
-description = out
+    description = out
 
 #
 # Extract the audio into its own file by using the Convert functions of VLC
@@ -118,10 +138,14 @@ audio = os.path.join(SERVICES_DIR, today + '.mp3')
 if os.path.exists(audio):
     print("Audio has already been extracted from video")
 else:
-    p = progress('Extracting audio from video recording')
+
+    p = None
+    if not cmdargs.batch:
+        p = progress('Extracting audio from video recording')
+
     command = [
         # Note: cvlc runs withuot the GUI
-        '/usr/bin/vlc',
+        '/usr/bin/cvlc',
         '--no-sout-video',
         '--sout',
         '#transcode{acodec=mp3,ab=128,channels=2,samplerate=44100}' + \
@@ -129,7 +153,9 @@ else:
         video,
         'vlc://quit']
     run(command)
-    p.stdin.close()
+
+    if p:
+        p.stdin.close()
 
 # Upload the file to vimeo.
 #  If it already exists, prompt to override
@@ -149,24 +175,36 @@ response = client.get('/me/videos', params={'per_page': 1,
 if response['total'] > 0:
     try:
         video_uri = response['data'][0]['uri']
-        zenity("--question", "--no-wrap",
-               "--text",
-               '%s has already been uploaded. Overwrite?' % (today))
-        p = progress("Uploading replacement video")
+        if not cmdargs.batch:
+            zenity("--question", "--no-wrap",
+                "--text",
+                '%s has already been uploaded. Overwrite?' % (today))
+
+        p = None
+        if not cmdargs.batch:
+            p = progress("Uploading replacement video")
         client.replace(video_uri=video_uri, filename=video)
-        p.stdin.close()
+
+        if p:
+            p.stdin.close()
     except Exception:
         pass
 
 else:
-    p = progress('Uploading video')
+    p = None
+    if cmdargs.batch:
+        print("Uploading video")
+    else:
+        p = progress('Uploading video')
+
     video_uri = client.upload(video, data={
         'name': today,
         'description': description,
         'content_rating': 'safe',
         'language': 'en-US',
     })
-    p.stdin.close()
+    if p:
+        p.stdin.close()
 
 #
 # Add the video to the Services channel
@@ -191,4 +229,9 @@ else:
 
 message = "Wrapup complete"
 print(message)
-zenity("--info", "--no-wrap", "--text", message)
+if not cmdargs.batch:
+    try:
+        zenity("--info", "--no-wrap", "--text", message, "--timeout", "60")
+    except Exception:
+        # Ignore any exception thrown due to timeout
+        pass
