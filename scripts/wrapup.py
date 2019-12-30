@@ -5,6 +5,7 @@ import datetime
 import os
 from subprocess import run, Popen, PIPE
 import sys
+from tempfile import mkstemp
 import vimeo
 import yaml
 
@@ -58,8 +59,10 @@ SERVICES_DIR = os.path.join(os.path.expanduser('~'), 'Dropbox', 'Services')
 today = datetime.datetime.now().strftime('%Y-%m-%d')
 video = os.path.join(RECORDINGS_DIR, today + '.mp4')
 
-files = [os.path.join(RECORDINGS_DIR, f)
-         for f in os.listdir(RECORDINGS_DIR) if today in f]
+original = [os.path.join(RECORDINGS_DIR, f)
+            for f in os.listdir(RECORDINGS_DIR)
+            if f.startswith('vlc-record-'+today)]
+original.sort()
 
 config = None
 config_file = os.path.join(
@@ -80,29 +83,72 @@ except Exception as e:
 # Convert the filename from the cryptic version that VLC creates,
 #   vlc-record-DATE-blah-blah
 # to just DATE.mp4 and place it in the $HOME/Videos directory
-original = None
-for f in files:
-    if 'vlc-record-'+today in f:
-        original = f
-        break
 
+dest_video_exists = os.path.exists(video)
 
 if original:
-    if video in files:
+
+    if dest_video_exists and not cmdargs.batch:
         try:
-            if not cmdargs.batch:
-                zenity("--question", "--no-wrap",
-                    "--text", 'Overwrite %s with %s?' % (video, original))
-            print('Renaming %s to %s' % (original, video))
-            os.rename(original, video)
+            zenity("--question", "--no-wrap",
+                   "--text", 'Overwrite %s?' % video)
 
         except Exception:
-            pass
-    else:
-        print('Renaming %s to %s' % (original, video))
-        os.rename(original, video)
+            sys.exit(1)
 
-elif video not in files:
+    if len(original) > 1:
+
+        to_join = original
+        if not cmdargs.batch:
+
+            listargs=[]
+            for item in original:
+                listargs.append("TRUE")
+                listargs.append(item)
+
+            try:
+                to_join = []
+                out, _ = zenity("--list", "--checklist", "--separator", ",",
+                                "--hide-header",
+                                "--width", "500", "--height", "250",
+                                "--column", "use", "--column", "file",
+                                "--text", "Select files to join together",
+                                *listargs)
+                if out:
+                    to_join = out.split(',')
+
+            except Exception:
+                sys.exit(1)
+
+        if not to_join:
+            print("Exiting since no files chosen")
+            sys.exit(1)
+
+        elif len(to_join) == 1:
+            print('Renaming %s to %s' % (to_join[0], video))
+            os.rename(to_join[0], video)
+        else:
+            # Join them together with ffmpeg:
+            #   ffmpeg -f concat -safe 0 -i FILELIST.txt -c copy OUTPUT.mp4
+
+            # Write list of tiles to temp file
+            fd, path = mkstemp()
+            with open(fd, 'w') as f:
+                for fn in to_join:
+                    f.write("file '%s'\n" % fn)
+
+            # Call ffmpeg with file list in temp file
+            command = [
+                '/usr/bin/ffmpeg', '-f', 'concat', '-safe', '0', '-y',
+                '-i', path, '-c', 'copy', video]
+            run(command)
+
+    else:
+        print('Renaming %s to %s' % (original[0], video))
+        os.rename(original[0], video)
+
+
+elif not dest_video_exists:
     message = 'No recording found for today, '+today
     if cmdargs.batch:
         print(message)
@@ -144,7 +190,7 @@ else:
         p = progress('Extracting audio from video recording')
 
     command = [
-        # Note: cvlc runs withuot the GUI
+        # Note: cvlc runs without the GUI
         '/usr/bin/cvlc',
         '--no-sout-video',
         '--sout',

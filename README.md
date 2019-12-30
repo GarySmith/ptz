@@ -81,4 +81,3 @@ Improvement and adjustments that are needed (not in any particular order):
   may be automatically enabled depending on the time/date, but would need to figure out how to override it to actually
   stop recording
 - Add ability in UI to run the wrapup script (and show its progress)
-- Add logic in wrapup script to detect multiple recordings for the day and optionally concatenate them together using VLC.
