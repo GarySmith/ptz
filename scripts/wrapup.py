@@ -2,10 +2,12 @@
 
 import argparse
 import datetime
+import logging
 import os
 from subprocess import run, Popen, PIPE
 import sys
 from tempfile import mkstemp
+import time
 import vimeo
 import yaml
 
@@ -23,9 +25,17 @@ import yaml
 parser = argparse.ArgumentParser(description="Wrap up the recording.")
 parser.add_argument('--batch', '-b', action='store_true',
                     help='Avoid prompts and GUI messages')
+parser.add_argument('--dry-run', '-n', action='store_true',
+                    help='Avoid uploading anything')
 parser.add_argument('--description', '-d',
                     help='Description of the video to show in Vimeo')
 cmdargs = parser.parse_args()
+
+
+logging.basicConfig(level=logging.INFO,
+                            format="%(asctime)s %(levelname)-7s %(message)s")
+LOG = logging.getLogger(__name__)
+
 
 def progress(message='Message'):
     command = ['/usr/bin/zenity',
@@ -72,9 +82,8 @@ try:
         config = yaml.safe_load(f)
 except Exception as e:
     message = '\n'.join(['Unable to load config.json', str(e)])
-    if cmdargs.batch:
-        print("Exiting: ", message)
-    else:
+    LOG.info("Exiting: ", message)
+    if not cmdargs.batch:
         zenity('--error', '--no-wrap',
             '--ok-label', 'Exit',
             '--text', message)
@@ -121,11 +130,11 @@ if original:
                 sys.exit(1)
 
         if not to_join:
-            print("Exiting since no files chosen")
+            LOG.info("Exiting since no files chosen")
             sys.exit(1)
 
         elif len(to_join) == 1:
-            print('Renaming %s to %s' % (to_join[0], video))
+            LOG.info('Renaming %s to %s' % (to_join[0], video))
             os.rename(to_join[0], video)
         else:
             # Join them together with ffmpeg:
@@ -144,21 +153,20 @@ if original:
             run(command)
 
     else:
-        print('Renaming %s to %s' % (original[0], video))
+        LOG.info('Renaming %s to %s' % (original[0], video))
         os.rename(original[0], video)
 
 
 elif not dest_video_exists:
     message = 'No recording found for today, '+today
-    if cmdargs.batch:
-        print(message)
-    else:
+    LOG.info(message)
+    if not cmdargs.batch:
         zenity('--error', '--no-wrap',
             '--ok-label', 'Exit',
             '--text', message)
     sys.exit(1)
 else:
-    print('Video recording is already named correctly')
+    LOG.info('Video recording is already named correctly')
 
 
 # Get the description of the service before all of the long-running tasks
@@ -182,12 +190,15 @@ else:
 #
 audio = os.path.join(SERVICES_DIR, today + '.mp3')
 if os.path.exists(audio):
-    print("Audio has already been extracted from video")
+    LOG.info("Audio has already been extracted from video")
 else:
 
     p = None
     if not cmdargs.batch:
         p = progress('Extracting audio from video recording')
+
+    if cmdargs.dry_run:
+        fd, audio = mkstemp()
 
     command = [
         # Note: cvlc runs without the GUI
@@ -226,10 +237,16 @@ if response['total'] > 0:
                 "--text",
                 '%s has already been uploaded. Overwrite?' % (today))
 
+        LOG.info("Uploading replacement video")
+
         p = None
         if not cmdargs.batch:
             p = progress("Uploading replacement video")
-        client.replace(video_uri=video_uri, filename=video)
+
+        if cmdargs.dry_run:
+            time.sleep(2)
+        else:
+            client.replace(video_uri=video_uri, filename=video)
 
         if p:
             p.stdin.close()
@@ -237,18 +254,22 @@ if response['total'] > 0:
         pass
 
 else:
+    LOG.info("Uploading video")
+
     p = None
-    if cmdargs.batch:
-        print("Uploading video")
-    else:
+    if not cmdargs.batch:
         p = progress('Uploading video')
 
-    video_uri = client.upload(video, data={
-        'name': today,
-        'description': description,
-        'content_rating': 'safe',
-        'language': 'en-US',
-    })
+    if cmdargs.dry_run:
+        video_uri = 'dry_run_uri'
+        time.sleep(2)
+    else:
+        video_uri = client.upload(video, data={
+            'name': today,
+            'description': description,
+            'content_rating': 'safe',
+            'language': 'en-US',
+        })
     if p:
         p.stdin.close()
 
@@ -265,16 +286,17 @@ channel_video_uri = response.json()['uri'] + video_uri
 # See if the video is already in the services channel
 response = client.get(channel_video_uri, params={'fields': 'uri'})
 if response.status_code == 200:
-    print("Video is already in the Services channel")
+    LOG.info("Video is already in the Services channel")
 else:
-    print("Adding video to the Services channel")
-    response = client.put(channel_video_uri)
-    response.raise_for_status()
+    LOG.info("Adding video to the Services channel")
+    if not cmdargs.dry_run:
+        response = client.put(channel_video_uri)
+        response.raise_for_status()
 
-    print('Video added to Services channel')
+    LOG.info('Video added to Services channel')
 
 message = "Wrapup complete"
-print(message)
+LOG.info(message)
 if not cmdargs.batch:
     try:
         zenity("--info", "--no-wrap", "--text", message, "--timeout", "60")
