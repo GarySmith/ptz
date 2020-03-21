@@ -4,6 +4,7 @@ import argparse
 import datetime
 import logging
 import os
+import pidfile
 from subprocess import run, Popen, PIPE
 import sys
 from tempfile import mkstemp
@@ -64,242 +65,252 @@ def zenity(*args, **kwargs):
     return (out.decode('utf-8').rstrip(), errs.decode('utf-8').rstrip())
 
 
-RECORDINGS_DIR = os.path.join(os.path.expanduser('~'), 'Videos')
-SERVICES_DIR = os.path.join(os.path.expanduser('~'), 'Dropbox', 'Services')
-today = datetime.datetime.now().strftime('%Y-%m-%d')
-video = os.path.join(RECORDINGS_DIR, today + '.mp4')
+def main():
 
-original = [os.path.join(RECORDINGS_DIR, f)
-            for f in os.listdir(RECORDINGS_DIR)
-            if f.startswith('vlc-record-'+today)]
-original.sort()
+    RECORDINGS_DIR = os.path.join(os.path.expanduser('~'), 'Videos')
+    SERVICES_DIR = os.path.join(os.path.expanduser('~'), 'Dropbox', 'Services')
+    today = datetime.datetime.now().strftime('%Y-%m-%d')
+    video = os.path.join(RECORDINGS_DIR, today + '.mp4')
 
-config = None
-config_file = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), 'config.json')
-try:
-    with open(config_file) as f:
-        config = yaml.safe_load(f)
-except Exception as e:
-    message = '\n'.join(['Unable to load config.json', str(e)])
-    LOG.info("Exiting: ", message)
-    if not cmdargs.batch:
-        zenity('--error', '--no-wrap',
-            '--ok-label', 'Exit',
-            '--text', message)
-    sys.exit(1)
+    original = [os.path.join(RECORDINGS_DIR, f)
+                for f in os.listdir(RECORDINGS_DIR)
+                if f.startswith('vlc-record-'+today)]
+    original.sort()
+
+    config = None
+    config_file = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), 'config.json')
+    try:
+        with open(config_file) as f:
+            config = yaml.safe_load(f)
+    except Exception as e:
+        message = '\n'.join(['Unable to load config.json', str(e)])
+        LOG.info("Exiting: ", message)
+        if not cmdargs.batch:
+            zenity('--error', '--no-wrap',
+                '--ok-label', 'Exit',
+                '--text', message)
+        sys.exit(1)
 
 # Convert the filename from the cryptic version that VLC creates,
 #   vlc-record-DATE-blah-blah
 # to just DATE.mp4 and place it in the $HOME/Videos directory
 
-dest_video_exists = os.path.exists(video)
+    dest_video_exists = os.path.exists(video)
 
-if original:
+    if original:
 
-    if dest_video_exists and not cmdargs.batch:
-        try:
-            zenity("--question", "--no-wrap",
-                   "--text", 'Overwrite %s?' % video)
-
-        except Exception:
-            sys.exit(1)
-
-    if len(original) > 1:
-
-        to_join = original
-        if not cmdargs.batch:
-
-            listargs=[]
-            for item in original:
-                listargs.append("TRUE")
-                listargs.append(item)
-
+        if dest_video_exists and not cmdargs.batch:
             try:
-                to_join = []
-                out, _ = zenity("--list", "--checklist", "--separator", ",",
-                                "--hide-header",
-                                "--width", "500", "--height", "250",
-                                "--column", "use", "--column", "file",
-                                "--text", "Select files to join together",
-                                *listargs)
-                if out:
-                    to_join = out.split(',')
+                zenity("--question", "--no-wrap",
+                    "--text", 'Overwrite %s?' % video)
 
             except Exception:
                 sys.exit(1)
 
-        if not to_join:
-            LOG.info("Exiting since no files chosen")
-            sys.exit(1)
+        if len(original) > 1:
 
-        elif len(to_join) == 1:
-            LOG.info('Renaming %s to %s' % (to_join[0], video))
-            os.rename(to_join[0], video)
+            to_join = original
+            if not cmdargs.batch:
+
+                listargs=[]
+                for item in original:
+                    listargs.append("TRUE")
+                    listargs.append(item)
+
+                try:
+                    to_join = []
+                    out, _ = zenity("--list", "--checklist", "--separator", ",",
+                                    "--hide-header",
+                                    "--width", "500", "--height", "250",
+                                    "--column", "use", "--column", "file",
+                                    "--text", "Select files to join together",
+                                    *listargs)
+                    if out:
+                        to_join = out.split(',')
+
+                except Exception:
+                    sys.exit(1)
+
+            if not to_join:
+                LOG.info("Exiting since no files chosen")
+                sys.exit(1)
+
+            elif len(to_join) == 1:
+                LOG.info('Renaming %s to %s' % (to_join[0], video))
+                os.rename(to_join[0], video)
+            else:
+                # Join them together with ffmpeg:
+                #   ffmpeg -f concat -safe 0 -i FILELIST.txt -c copy OUTPUT.mp4
+
+                # Write list of tiles to temp file
+                fd, path = mkstemp()
+                with open(fd, 'w') as f:
+                    for fn in to_join:
+                        f.write("file '%s'\n" % fn)
+
+                # Call ffmpeg with file list in temp file
+                command = [
+                    '/usr/bin/ffmpeg', '-f', 'concat', '-safe', '0', '-y',
+                    '-i', path, '-c', 'copy', video]
+                run(command)
+
         else:
-            # Join them together with ffmpeg:
-            #   ffmpeg -f concat -safe 0 -i FILELIST.txt -c copy OUTPUT.mp4
+            LOG.info('Renaming %s to %s' % (original[0], video))
+            os.rename(original[0], video)
 
-            # Write list of tiles to temp file
-            fd, path = mkstemp()
-            with open(fd, 'w') as f:
-                for fn in to_join:
-                    f.write("file '%s'\n" % fn)
 
-            # Call ffmpeg with file list in temp file
-            command = [
-                '/usr/bin/ffmpeg', '-f', 'concat', '-safe', '0', '-y',
-                '-i', path, '-c', 'copy', video]
-            run(command)
-
+    elif not dest_video_exists:
+        message = 'No recording found for today, '+today
+        LOG.info(message)
+        if not cmdargs.batch:
+            zenity('--error', '--no-wrap',
+                '--ok-label', 'Exit',
+                '--text', message)
+        sys.exit(1)
     else:
-        LOG.info('Renaming %s to %s' % (original[0], video))
-        os.rename(original[0], video)
-
-
-elif not dest_video_exists:
-    message = 'No recording found for today, '+today
-    LOG.info(message)
-    if not cmdargs.batch:
-        zenity('--error', '--no-wrap',
-            '--ok-label', 'Exit',
-            '--text', message)
-    sys.exit(1)
-else:
-    LOG.info('Video recording is already named correctly')
+        LOG.info('Video recording is already named correctly')
 
 
 # Get the description of the service before all of the long-running tasks
-if cmdargs.description:
-    description = cmdargs.description
-elif cmdargs.batch:
-    description = 'Recorded service for '+today
-else:
-    try:
-        out, _ = zenity('--title', 'Video Description',
-                        '--entry',
-                        '--width', '800',
-                        '--text', 'Description of the video to show in Vimeo')
-    except Exception:
-        sys.exit(1)
+    if cmdargs.description:
+        description = cmdargs.description
+    elif cmdargs.batch:
+        description = 'Recorded service for '+today
+    else:
+        try:
+            out, _ = zenity('--title', 'Video Description',
+                            '--entry',
+                            '--width', '800',
+                            '--text', 'Description of the video to show in Vimeo')
+        except Exception:
+            sys.exit(1)
 
-    description = out
+        description = out
 
 #
 # Extract the audio into its own file by using the Convert functions of VLC
 #
-audio = os.path.join(SERVICES_DIR, today + '.mp3')
-if os.path.exists(audio):
-    LOG.info("Audio has already been extracted from video")
-else:
+    audio = os.path.join(SERVICES_DIR, today + '.mp3')
+    if os.path.exists(audio):
+        LOG.info("Audio has already been extracted from video")
+    else:
 
-    p = None
-    if not cmdargs.batch:
-        p = progress('Extracting audio from video recording')
+        p = None
+        if not cmdargs.batch:
+            p = progress('Extracting audio from video recording')
 
-    if cmdargs.dry_run:
-        fd, audio = mkstemp()
+        if cmdargs.dry_run:
+            fd, audio = mkstemp()
 
-    command = [
-        # Note: cvlc runs without the GUI
-        '/usr/bin/cvlc',
-        '--no-sout-video',
-        '--sout',
-        '#transcode{acodec=mp3,ab=128,channels=2,samplerate=44100}' + \
-        ':std{access=file,mux=raw,dst=%s}' % (audio),
-        video,
-        'vlc://quit']
-    run(command)
+        command = [
+            # Note: cvlc runs without the GUI
+            '/usr/bin/cvlc',
+            '--no-sout-video',
+            '--sout',
+            '#transcode{acodec=mp3,ab=128,channels=2,samplerate=44100}' + \
+            ':std{access=file,mux=raw,dst=%s}' % (audio),
+            video,
+            'vlc://quit']
+        run(command)
 
-    if p:
-        p.stdin.close()
+        if p:
+            p.stdin.close()
 
 # Upload the file to vimeo.
 #  If it already exists, prompt to override
 #  Else prompt for description
 
-client = vimeo.VimeoClient(
-  token=config['access_token'],
-  key=config['client_id'],
-  secret=config['client_secret']
-)
+    client = vimeo.VimeoClient(
+    token=config['access_token'],
+    key=config['client_id'],
+    secret=config['client_secret']
+    )
 
 # Is the video already available on vimeo?
-response = client.get('/me/videos', params={'per_page': 1,
-                                            'fields': 'uri',
-                                            'query': today}).json()
+    response = client.get('/me/videos', params={'per_page': 1,
+                                                'fields': 'uri',
+                                                'query': today}).json()
 
-if response['total'] > 0:
-    try:
-        video_uri = response['data'][0]['uri']
-        if not cmdargs.batch:
-            zenity("--question", "--no-wrap",
-                "--text",
-                '%s has already been uploaded. Overwrite?' % (today))
+    if response['total'] > 0:
+        try:
+            video_uri = response['data'][0]['uri']
+            if not cmdargs.batch:
+                zenity("--question", "--no-wrap",
+                    "--text",
+                    '%s has already been uploaded. Overwrite?' % (today))
 
-        LOG.info("Uploading replacement video")
+            LOG.info("Uploading replacement video")
+
+            p = None
+            if not cmdargs.batch:
+                p = progress("Uploading replacement video")
+
+            if cmdargs.dry_run:
+                time.sleep(2)
+            else:
+                client.replace(video_uri=video_uri, filename=video)
+
+            if p:
+                p.stdin.close()
+        except Exception:
+            pass
+
+    else:
+        LOG.info("Uploading video")
 
         p = None
         if not cmdargs.batch:
-            p = progress("Uploading replacement video")
+            p = progress('Uploading video')
 
         if cmdargs.dry_run:
+            video_uri = 'dry_run_uri'
             time.sleep(2)
         else:
-            client.replace(video_uri=video_uri, filename=video)
-
+            video_uri = client.upload(video, data={
+                'name': today,
+                'description': description,
+                'content_rating': 'safe',
+                'language': 'en-US',
+            })
         if p:
             p.stdin.close()
-    except Exception:
-        pass
-
-else:
-    LOG.info("Uploading video")
-
-    p = None
-    if not cmdargs.batch:
-        p = progress('Uploading video')
-
-    if cmdargs.dry_run:
-        video_uri = 'dry_run_uri'
-        time.sleep(2)
-    else:
-        video_uri = client.upload(video, data={
-            'name': today,
-            'description': description,
-            'content_rating': 'safe',
-            'language': 'en-US',
-        })
-    if p:
-        p.stdin.close()
 
 #
 # Add the video to the Services channel
 #
 
 # Get the channel id
-response = client.get('/channels/hopeservices', params={'fields': 'uri'})
-response.raise_for_status()
+    response = client.get('/channels/hopeservices', params={'fields': 'uri'})
+    response.raise_for_status()
 
-channel_video_uri = response.json()['uri'] + video_uri
+    channel_video_uri = response.json()['uri'] + video_uri
 
 # See if the video is already in the services channel
-response = client.get(channel_video_uri, params={'fields': 'uri'})
-if response.status_code == 200:
-    LOG.info("Video is already in the Services channel")
-else:
-    LOG.info("Adding video to the Services channel")
-    if not cmdargs.dry_run:
-        response = client.put(channel_video_uri)
-        response.raise_for_status()
+    response = client.get(channel_video_uri, params={'fields': 'uri'})
+    if response.status_code == 200:
+        LOG.info("Video is already in the Services channel")
+    else:
+        LOG.info("Adding video to the Services channel")
+        if not cmdargs.dry_run:
+            response = client.put(channel_video_uri)
+            response.raise_for_status()
 
-    LOG.info('Video added to Services channel')
+        LOG.info('Video added to Services channel')
 
-message = "Wrapup complete"
-LOG.info(message)
-if not cmdargs.batch:
+    message = "Wrapup complete"
+    LOG.info(message)
+    if not cmdargs.batch:
+        try:
+            zenity("--info", "--no-wrap", "--text", message, "--timeout", "60")
+        except Exception:
+            # Ignore any exception thrown due to timeout
+            pass
+
+if __name__ == "__main__":
+
     try:
-        zenity("--info", "--no-wrap", "--text", message, "--timeout", "60")
-    except Exception:
-        # Ignore any exception thrown due to timeout
-        pass
+        with pidfile.PIDFile('wrapup.pid'):
+            main()
+    except pidfile.AlreadyRunningError:
+        LOG.error("Already running.  Exiting.")

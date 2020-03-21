@@ -1,3 +1,4 @@
 tuspy>=0.2.2
 PyVimeo
 PyYaml
+python-pidfile
