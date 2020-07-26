@@ -3,6 +3,7 @@
 import argparse
 import datetime
 import logging
+import glob
 import os
 import pidfile
 from subprocess import run, Popen, PIPE
@@ -70,6 +71,7 @@ def main():
     RECORDINGS_DIR = os.path.join(os.path.expanduser('~'), 'Videos')
     SERVICES_DIR = os.path.join(os.path.expanduser('~'), 'Dropbox', 'Services')
     today = datetime.datetime.now().strftime('%Y-%m-%d')
+
     video = os.path.join(RECORDINGS_DIR, today + '.mp4')
 
     original = [os.path.join(RECORDINGS_DIR, f)
@@ -77,6 +79,8 @@ def main():
                 if f.startswith('vlc-record-'+today)]
     original.sort()
 
+    # Read config to get connectivity info for vimeo.  Do the check
+    # early on so that if we fail, we fail quickly
     config = None
     config_file = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), 'config.json')
@@ -156,8 +160,32 @@ def main():
                 run(command)
 
         else:
-            LOG.info('Renaming %s to %s' % (original[0], video))
-            os.rename(original[0], video)
+            # Only one input file
+            ext = os.path.splitext(original[0])[1]
+
+            if ext == '.mp4':
+                # The original is an mp4 file, so there is no need for convertion
+                LOG.info('Renaming %s to %s' % (original[0], video))
+                os.rename(original[0], video)
+            else:
+                # Convert the file and remove the original
+                p = None
+                if not cmdargs.batch:
+                    p = progress('Converting video to mp4')
+
+                command = [
+                    # Note: cvlc runs without the GUI
+                    '/usr/bin/cvlc',
+                    '--sout',
+                    '#transcode{vcodec=h265,acodec=mp4a,deinterlace}' + \
+                    ':std{access=file,dst=%s}' % (video),
+                    original[0],
+                    'vlc://quit']
+                run(command)
+                os.unlink(original[0])
+
+                if p:
+                    p.stdin.close()
 
 
     elif not dest_video_exists:
@@ -201,7 +229,7 @@ def main():
             p = progress('Extracting audio from video recording')
 
         if cmdargs.dry_run:
-            fd, audio = mkstemp()
+            _, audio = mkstemp()
 
         command = [
             # Note: cvlc runs without the GUI
