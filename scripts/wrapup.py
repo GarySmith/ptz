@@ -102,6 +102,34 @@ def main():
 
     dest_video_exists = os.path.exists(video)
 
+    # Exit before prompting if there is no recording
+    if not original and not dest_video_exists:
+        message = 'No recording found for today, '+today
+        LOG.info(message)
+        if not cmdargs.batch:
+            zenity('--error', '--no-wrap',
+                '--ok-label', 'Exit',
+                '--text', message)
+        sys.exit(1)
+
+    # Prmopt for the description of the service before all of the long-running
+    # tasks
+    if cmdargs.description:
+        description = cmdargs.description
+    elif cmdargs.batch:
+        description = 'Recorded service for '+today
+    else:
+        try:
+            out, _ = zenity('--title', 'Video Description',
+                            '--entry',
+                            '--width', '800',
+                            '--text', 'Description of the video to show in Vimeo')
+        except Exception:
+            sys.exit(1)
+
+        description = out
+
+
     if original:
 
         if dest_video_exists and not cmdargs.batch:
@@ -164,7 +192,8 @@ def main():
             ext = os.path.splitext(original[0])[1]
 
             if ext == '.mp4':
-                # The original is an mp4 file, so there is no need for convertion
+                # The original is an mp4 file, so there is no need for
+                # conversion
                 LOG.info('Renaming %s to %s' % (original[0], video))
                 os.rename(original[0], video)
             else:
@@ -187,34 +216,9 @@ def main():
                 if p:
                     p.stdin.close()
 
-
-    elif not dest_video_exists:
-        message = 'No recording found for today, '+today
-        LOG.info(message)
-        if not cmdargs.batch:
-            zenity('--error', '--no-wrap',
-                '--ok-label', 'Exit',
-                '--text', message)
-        sys.exit(1)
     else:
         LOG.info('Video recording is already named correctly')
 
-
-# Get the description of the service before all of the long-running tasks
-    if cmdargs.description:
-        description = cmdargs.description
-    elif cmdargs.batch:
-        description = 'Recorded service for '+today
-    else:
-        try:
-            out, _ = zenity('--title', 'Video Description',
-                            '--entry',
-                            '--width', '800',
-                            '--text', 'Description of the video to show in Vimeo')
-        except Exception:
-            sys.exit(1)
-
-        description = out
 
 #
 # Extract the audio into its own file by using the Convert functions of VLC
