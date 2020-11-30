@@ -3,7 +3,6 @@
 import argparse
 import datetime
 import logging
-import glob
 import os
 import pidfile
 from subprocess import run, Popen, PIPE
@@ -35,7 +34,7 @@ cmdargs = parser.parse_args()
 
 
 logging.basicConfig(level=logging.INFO,
-                            format="%(asctime)s %(levelname)-7s %(message)s")
+                    format="%(asctime)s %(levelname)-7s %(message)s")
 LOG = logging.getLogger(__name__)
 
 
@@ -92,8 +91,8 @@ def main():
         LOG.info("Exiting: ", message)
         if not cmdargs.batch:
             zenity('--error', '--no-wrap',
-                '--ok-label', 'Exit',
-                '--text', message)
+                   '--ok-label', 'Exit',
+                   '--text', message)
         sys.exit(1)
 
 # Convert the filename from the cryptic version that VLC creates,
@@ -108,8 +107,8 @@ def main():
         LOG.info(message)
         if not cmdargs.batch:
             zenity('--error', '--no-wrap',
-                '--ok-label', 'Exit',
-                '--text', message)
+                   '--ok-label', 'Exit',
+                   '--text', message)
         sys.exit(1)
 
     # Prmopt for the description of the service before all of the long-running
@@ -120,22 +119,22 @@ def main():
         description = 'Recorded service for '+today
     else:
         try:
-            out, _ = zenity('--title', 'Video Description',
-                            '--entry',
-                            '--width', '800',
-                            '--text', 'Description of the video to show in Vimeo')
+            out, _ = zenity(
+                '--title', 'Video Description',
+                '--entry',
+                '--width', '800',
+                '--text', 'Description of the video to show in Vimeo')
         except Exception:
             sys.exit(1)
 
         description = out
-
 
     if original:
 
         if dest_video_exists and not cmdargs.batch:
             try:
                 zenity("--question", "--no-wrap",
-                    "--text", 'Overwrite %s?' % video)
+                       "--text", 'Overwrite %s?' % video)
 
             except Exception:
                 sys.exit(1)
@@ -145,19 +144,20 @@ def main():
             to_join = original
             if not cmdargs.batch:
 
-                listargs=[]
+                listargs = []
                 for item in original:
                     listargs.append("TRUE")
                     listargs.append(item)
 
                 try:
                     to_join = []
-                    out, _ = zenity("--list", "--checklist", "--separator", ",",
-                                    "--hide-header",
-                                    "--width", "500", "--height", "250",
-                                    "--column", "use", "--column", "file",
-                                    "--text", "Select files to join together",
-                                    *listargs)
+                    out, _ = zenity(
+                        "--list", "--checklist", "--separator", ",",
+                        "--hide-header",
+                        "--width", "500", "--height", "250",
+                        "--column", "use", "--column", "file",
+                        "--text", "Select files to join together",
+                        *listargs)
                     if out:
                         to_join = out.split(',')
 
@@ -254,9 +254,9 @@ def main():
 #  Else prompt for description
 
     client = vimeo.VimeoClient(
-    token=config['access_token'],
-    key=config['client_id'],
-    secret=config['client_secret']
+        token=config['access_token'],
+        key=config['client_id'],
+        secret=config['client_secret']
     )
 
 # Is the video already available on vimeo?
@@ -269,8 +269,8 @@ def main():
             video_uri = response['data'][0]['uri']
             if not cmdargs.batch:
                 zenity("--question", "--no-wrap",
-                    "--text",
-                    '%s has already been uploaded. Overwrite?' % (today))
+                       "--text",
+                       '%s has already been uploaded. Overwrite?' % (today))
 
             LOG.info("Uploading replacement video")
 
@@ -338,6 +338,7 @@ def main():
         except Exception:
             # Ignore any exception thrown due to timeout
             pass
+
 
 if __name__ == "__main__":
 
