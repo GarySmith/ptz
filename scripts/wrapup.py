@@ -249,9 +249,9 @@ def main():
         if p:
             p.stdin.close()
 
-# Upload the file to vimeo.
-#  If it already exists, prompt to override
-#  Else prompt for description
+    # Upload the file to vimeo.
+    #  If it already exists, prompt to override
+    #  Else prompt for description
 
     client = vimeo.VimeoClient(
         token=config['access_token'],
@@ -259,10 +259,19 @@ def main():
         secret=config['client_secret']
     )
 
-# Is the video already available on vimeo?
-    response = client.get('/me/videos', params={'per_page': 1,
-                                                'fields': 'uri',
-                                                'query': today}).json()
+    # Is the video already available on vimeo?
+    # In late Noverember 2020, the vimeo search API stopped working correctly.
+    # Searching by the exact title no longer works when there are dashes in
+    # the name -- it seems to ignore everything after the first dash and thus
+    # return all the videos for the year.  Determined through experimentation
+    # that periods will match a single character (like a regex), and thus use
+    # that instead
+    params = {
+        'per_page': 1,
+        'fields': 'uri,name',
+        'query': today.replace('-', '.'),
+    }
+    response = client.get('/me/videos', params=params).json()
 
     if response['total'] > 0:
         try:
