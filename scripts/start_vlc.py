@@ -15,7 +15,7 @@ from subprocess import check_output, call
 import sys
 
 want_mic = "TONOR"
-want_camera = "Pro_Webcam"
+want_camera = "VF0420_Live__Cam_Vista_IM"
 
 zenity = shutil.which('zenity')
 
@@ -81,5 +81,10 @@ while not camera:
         if resp == 1:
             sys.exit()
 
-print(f'Mic: {mic}')
-print(f'Camera: {camera}')
+vlc = shutil.which('vlc')
+resp = call([vlc,
+             f'v4l2://{camera}::v4l2-standard=',
+             f':input-slave=alsa://{mic}',
+             ':live-caching=300'])
+#print(f'Mic: {mic}')
+#print(f'Camera: {camera}')
