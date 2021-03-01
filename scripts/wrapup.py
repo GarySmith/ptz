@@ -308,12 +308,18 @@ def main():
             video_uri = 'dry_run_uri'
             time.sleep(2)
         else:
-            video_uri = client.upload(video, data={
-                'name': today,
-                'description': description,
-                'content_rating': 'safe',
-                'language': 'en-US',
-            })
+            try:
+                video_uri = client.upload(video, data={
+                    'name': today,
+                    'description': description,
+                    'content_rating': 'safe',
+                    'language': 'en-US',
+                })
+            except Exception as e:
+                LOG.exception(e)
+                if not cmdargs.batch:
+                    zenity("--info", "--no-wrap", "--text", str(e), "--timeout", "60")
+                sys.exit(1)
         if p:
             p.stdin.close()
 

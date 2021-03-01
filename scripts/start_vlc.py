@@ -14,7 +14,9 @@ import shutil
 from subprocess import check_output, call
 import sys
 
-want_mic = "TONOR"
+#want_mic = "TONOR"
+# For some reason the church's TONOR mic does not have the expected name
+want_mic = "USB PnP Audio Device"
 want_camera = "VF0420_Live__Cam_Vista_IM"
 
 zenity = shutil.which('zenity')
