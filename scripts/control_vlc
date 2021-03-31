@@ -1,0 +1,119 @@
+#!/bin/bash
+
+# This script will automatically start the recording at "normal" service
+# hours without human intervention
+
+is_vlc_running () {
+    if [[ $(ss -Hlnt 'sport = 4200' | wc -l) == 0 ]] ; then
+        echo 0
+    else
+        echo 1
+    fi
+}
+
+is_recording () {
+    local rec_dir=/data/Videos
+    local capture_file=$(ls -tr $rec_dir | grep vlc-record | tail -1)
+    if [[ -z $capture_file ]] ; then
+        echo 0
+        return
+    fi
+
+    capture_file=$rec_dir/$capture_file
+
+    local start_size=$(stat -c %s $capture_file)
+    sleep 0.2
+    local end_size=$(stat -c %s $capture_file)
+
+    #echo $capture_file $start_size $end_size >&2
+    if [[ $start_size == $end_size ]] ; then
+        echo 0
+    else
+        echo 1
+    fi
+}
+
+start_recording() {
+    if [[ $(is_recording) == 1 ]] ; then
+        echo 'already recording'
+        return
+    fi
+
+    if [[ $(is_vlc_running) == 0 ]] ; then
+        echo 'vlc not running'
+        return
+    fi
+
+    printf 'key key-record\nlogout\n' | nc localhost 4200
+    echo 'recording started'
+    # Do not return right away, in order to let the recording
+    # gather enough data to begin writing to the file.  This ensures
+    # that requests of recording status are accurate
+    sleep 3  
+}
+
+
+stop_recording() {
+    if [[ $(is_recording) == 0 ]] ; then
+        echo 'already stopped'
+        return
+    fi
+
+    printf 'key key-record\nlogout\n' | nc localhost 4200
+    echo 'recording stopped'
+}
+
+if [[ $1 == setup ]] ; then
+    hour=$(date +%H)
+    dow=$(date +%H)   # Day of week, 1=Mon, 2=Tue, 3=Wed, ... 7=Sun
+
+    start=
+    stop=
+
+    timeout=30
+    # Sunday morning recordings
+    if [[ $dow == 7 ]] ;  then
+        if ((hour < 8)) ; then
+            start=08:00
+            stop=09:00
+        elif ((hour <= 10)) ; then
+            start=10:30
+            stop=11:30
+        fi
+
+    # 7pm Evening services
+    elif [[ $hour == 18 ]] ; then
+        start=19:00
+        stop=20:00
+    # for testing at home before 6 and after 7pm
+    #else
+    #    start=$(date --date "+1 minute" +%H:%M)
+    #    stop=$(date --date "+2 minutes" +%H:%M)
+    #    timeout=5  # dont wait so long
+    fi
+
+    # If none of the above criteria are met, do not automatically record
+    if [[ -z $start ]] ; then
+        return
+    fi
+
+    zenity \
+           --question \
+           --no-wrap \
+           --text "Recording will start at $start automatically.  Continue?" \
+           --ok-label Ok \
+           --cancel-label Quit \
+           --timeout $timeout
+     if [[ $? != 1 ]] ; then
+         echo "bash /data/ptz/scripts/control_vlc start" | at $start
+         echo "bash /data/ptz/scripts/control_vlc stop" | at $stop
+     fi
+
+elif [[ $1 == start ]] ; then
+    start_recording
+elif [[ $1 == stop ]] ; then
+    stop_recording
+elif [[ $1 == status ]] ; then
+    echo running? "$(is_vlc_running)"
+    echo recording? "$(is_recording)"
+fi
