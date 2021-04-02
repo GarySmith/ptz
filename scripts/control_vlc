@@ -94,7 +94,7 @@ if [[ $1 == setup ]] ; then
 
     # If none of the above criteria are met, do not automatically record
     if [[ -z $start ]] ; then
-        return
+        exit
     fi
 
     zenity \

@@ -1,7 +1,11 @@
 #!/bin/bash
 
-# Only do the auto-start when at Hope, i.e. the wireless address is 192.168.1.x
+# At login, this script is automatically run.  This script will launch
+# vlc with the appropriate input device and also set vlc to automatically
+# start recording at well-known recording times, via 'control_vlc setup'
 
+
+# Detect whether the laptop is at hope. 
 if ip -o addr show up wlo1 | grep 'inet ' | grep -q 192.168.1\\. ; then
 
     # Detect whether we are inside or outside based on the presence
