@@ -123,6 +123,7 @@ def main():
                 '--title', 'Video Description',
                 '--entry',
                 '--width', '800',
+                '--entry-text', "Welcome to worship!  Pastor Waterstradt's sermon today is \"\" based on ",
                 '--text', 'Description of the video to show in Vimeo')
         except Exception:
             sys.exit(1)
@@ -260,12 +261,17 @@ def main():
     )
 
     # Is the video already available on vimeo?
-    # In late Noverember 2020, the vimeo search API stopped working correctly.
+    # In late November 2020, the vimeo search API stopped working correctly.
     # Searching by the exact title no longer works when there are dashes in
     # the name -- it seems to ignore everything after the first dash and thus
     # return all the videos for the year.  Determined through experimentation
     # that periods will match a single character (like a regex), and thus use
-    # that instead
+    # that instead.
+    # After a couple of strange results throughout the year, I determined in 
+    # November 2021 that the search API can return incorrect results.  For 
+    # example, when querying for 2021.11.07, it may return '2021-07-11' (i.e.
+    # with the month and date reversed).  Therefore we have to inspect the 
+    # result set to determine whether there is indeed an exact match
     params = {
         'per_page': 1,
         'fields': 'uri,name',
@@ -273,9 +279,14 @@ def main():
     }
     response = client.get('/me/videos', params=params).json()
 
+    video_uri = None
     if response['total'] > 0:
+        for video in response['data']:
+            if video['name'] == today:
+                video_uri = video['url']
+
+    if video_uri:
         try:
-            video_uri = response['data'][0]['uri']
             if not cmdargs.batch:
                 zenity("--question", "--no-wrap",
                        "--text",
