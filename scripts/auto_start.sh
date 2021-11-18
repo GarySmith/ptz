@@ -6,7 +6,7 @@
 
 
 # Detect whether the laptop is at hope. 
-if ip -o addr show up wlo1 | grep 'inet ' | grep -q 192.168.1\\. ; then
+if ip -o addr show up wlo1 | grep 'inet ' | grep -q 192.168.0\\. ; then
 
     # Detect whether we are inside or outside based on the presence
     # of the wired interface IP address
