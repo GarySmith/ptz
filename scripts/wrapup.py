@@ -281,9 +281,9 @@ def main():
 
     video_uri = None
     if response['total'] > 0:
-        for video in response['data']:
-            if video['name'] == today:
-                video_uri = video['url']
+        for recording in response['data']:
+            if recording['name'] == today:
+                video_uri = recording['url']
 
     if video_uri:
         try:
